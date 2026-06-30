@@ -27,6 +27,7 @@ def build_propuesta(cfg):
     nd={"un (01) dormitorio":1,"dos (02) dormitorios":2,"tres (03) dormitorios":3}.get(dep["dormitorios_txt"],3)
     sexo=cfg.get("sexo","F").upper(); ape=cfg.get("apellido",""); ec=cfg.get("estado_civil","")
     trato="Señora:" if sexo=="F" else "Señor:"; estim=(f"Estimada Sra. {ape}" if sexo=="F" else f"Estimado Sr. {ape}")
+    narm=sum(1 for r in rows if "Armada" in r["concepto"])
     # textos dinámicos
     if hip:
         paren=f"{directo:.0f}% aporte directo + {hip_pct:.0f}% crédito hipotecario contra entrega"
@@ -34,7 +35,6 @@ def build_propuesta(cfg):
         secbody=f"El {directo:.0f}% del precio se cancela directamente a LA HAUS en aportes fraccionados durante la construcción, y el {hip_pct:.0f}% restante se desembolsa al momento de la entrega mediante crédito hipotecario que {'la clienta' if sexo=='F' else 'el cliente'} tramitará con el banco de su elección:"
         head="PLAN PERSONALIZADO (CON CRÉDITO HIPOTECARIO)"
     else:
-        narm=sum(1 for r in rows if "Armada" in r["concepto"])
         paren=f"financiamiento directo con LA HAUS en {narm} armadas"
         introtxt=f"el precio se cancela íntegramente a LA HAUS en aportes fraccionados durante la construcción ({directo:.0f}% directo), sin intervención bancaria."
         secbody="El precio de venta se cancela directamente a LA HAUS, sin intervención bancaria, conforme al siguiente cronograma:"
@@ -43,7 +43,8 @@ def build_propuesta(cfg):
     out=cfg["carpeta_salida"]; os.makedirs(out,exist_ok=True)
     name=f"Propuesta_VIVA_PRO_Depa{num}_{ape.replace(' ','')}_Personalizada.docx"
     outdocx=os.path.join(out,name)
-    shutil.copyfile(os.path.join(TPL,"TPL_Propuesta_OpcionB.docx"),outdocx)
+    tpl_file="TPL_Propuesta_OpcionB.docx" if hip else "TPL_Propuesta_OpcionA.docx"
+    shutil.copyfile(os.path.join(TPL,tpl_file),outdocx)
     tmp=outdocx+".tmp"
     import re
     with zipfile.ZipFile(outdocx) as zin, zipfile.ZipFile(tmp,"w",zipfile.ZIP_DEFLATED) as zout:
@@ -57,15 +58,21 @@ def build_propuesta(cfg):
                    "DNI: 44578531 — Estado civil: Soltera":f"DNI: {cfg['dni']} — Estado civil: {ec}",
                    "Señora:":trato,"Estimada Sra. Caballero":estim,
                    "Lima, 11 de junio de 2026":f"Lima, {flarga(d)}",
-                   "PROP-VP-203-2026-01B":f"PROP-VP-{num}-{d.year}-01P",
                    "Departamento N.° 203, Piso 2.":f"Departamento N.° {num}, {piso}.",
                    "3 dormitorios (3D-A) — 76 m² de área techada.":f"{nd} dormitorio{'s' if nd!=1 else ''} ({tip}) — {area} m² de área techada.",
-                   "Departamento 203":f"Departamento {num}","320,000.00":f"{P:,.2f}",
-                   "(50% directo + 50% crédito hipotecario contra entrega)":f"({paren})",
-                   ", bajo un esquema mixto: 50% del precio cancelado directamente a LA HAUS en aportes fraccionados durante la construcción, y el 50% restante mediante crédito hipotecario contra entrega del inmueble.":f", bajo un esquema personalizado: {introtxt}",
-                   "El 50% del precio se cancela directamente a LA HAUS en aportes fraccionados durante la construcción, y el 50% restante se desembolsa al momento de la entrega mediante crédito hipotecario que la clienta tramitará con el banco de su elección:":secbody,
-                   "OPCIÓN B (MIXTA CON HIPOTECARIO)":head,"— Opción B —":"— Plan de pago —","Opción B":"propuesta de pago"}
-                if sexo=="M": R["la clienta"]="el cliente"
+                   "Departamento 203":f"Departamento {num}","320,000.00":f"{P:,.2f}"}
+                if hip:
+                    R.update({"PROP-VP-203-2026-01B":f"PROP-VP-{num}-{d.year}-01P",
+                       "(50% directo + 50% crédito hipotecario contra entrega)":f"({paren})",
+                       ", bajo un esquema mixto: 50% del precio cancelado directamente a LA HAUS en aportes fraccionados durante la construcción, y el 50% restante mediante crédito hipotecario contra entrega del inmueble.":f", bajo un esquema personalizado: {introtxt}",
+                       "El 50% del precio se cancela directamente a LA HAUS en aportes fraccionados durante la construcción, y el 50% restante se desembolsa al momento de la entrega mediante crédito hipotecario que la clienta tramitará con el banco de su elección:":secbody,
+                       "OPCIÓN B (MIXTA CON HIPOTECARIO)":head,"— Opción B —":"— Plan de pago —","Opción B":"propuesta de pago"})
+                else:
+                    R.update({"PROP-VP-203-2026-01A-v2":f"PROP-VP-{num}-{d.year}-01P",
+                       "(financiamiento directo con LA HAUS en armadas cuatrimestrales)":f"({paren})",
+                       ", bajo un esquema de financiamiento directo con LA HAUS, con cuota inicial fraccionada del 40% y saldo del 60% en cuatro (04) armadas trimestrales hasta la entrega del inmueble.":f", bajo un esquema personalizado: {introtxt}",
+                       "OPCIÓN A (FINANCIAMIENTO DIRECTO)":head,"— Opción A —":"— Plan de pago —","Opción A":"propuesta de pago"})
+                if sexo=="M": R["la clienta"]="el cliente"; R["acompañarla"]="acompañarlo"
                 for a,b in sorted(R.items(),key=lambda kv:-len(kv[0])): xml=xml.replace(a,b)
                 data=xml.encode("utf-8")
             zout.writestr(it,data)
