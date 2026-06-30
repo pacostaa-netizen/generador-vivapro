@@ -90,10 +90,12 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
             # cronograma a filas para el motor
             rows=[]
             for _,r in df.iterrows():
-                if not str(r["Concepto"]).strip(): continue
-                pctv=float(r["% precio"] or 0)
-                monto=3500.0 if str(r["Concepto"]).strip().lower().startswith("separaci") else precio*pctv/100
-                rows.append({"concepto":str(r["Concepto"]).strip(),"fecha":str(r["Fecha"]).strip(),"monto":monto})
+                con=r["Concepto"]
+                if pd.isna(con) or not str(con).strip(): continue
+                pv=r["% precio"]; pctv=0.0 if pd.isna(pv) else float(pv)
+                fec="" if pd.isna(r["Fecha"]) else str(r["Fecha"]).strip()
+                monto=3500.0 if str(con).strip().lower().startswith("separaci") else precio*pctv/100
+                rows.append({"concepto":str(con).strip(),"fecha":fec,"monto":monto})
             hip={"concepto":"Saldo con crédito hipotecario","fecha":"Contra entrega (diciembre de 2027).",
                  "sub2":"Tasa, plazo y cuota los define el banco."} if incluir_hip else None
             inicial_pct=round(directo_pct/100,4) if incluir_hip else 0.20
