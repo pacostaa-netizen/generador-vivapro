@@ -73,15 +73,17 @@ def build(cfg):
     forma=cfg.get("forma_pago","Crédito Directo")
     W=PW-2*MX
     elems=[Spacer(1,52)]
-    elems.append(sec_table("DATOS DEL CLIENTE",[["Nombre",cfg["nombre"]]],W*0.42,W*0.58))
+    _nom=(str(cfg.get("nombre","")).strip()+" "+str(cfg.get("apellido","")).strip()).strip()
+    elems.append(sec_table("DATOS DEL CLIENTE",[["Nombre",_nom]],W*0.42,W*0.58))
     elems.append(Spacer(1,10))
     cot=[["Departamento",deptxt],["Área",f"{dep['area_m2']} m²"],
          ["Nivel / Código",f"{dep['piso']} - {cod}"],["Precio del departamento",f"S/ {P:,}"],
-         ["Forma de pago",forma],[f"Inicial {int(ini_pct*100)}%",f"S/ {inicial:,}"]]
+         ["Forma de pago",forma]]
     coch=cfg.get("cochera")
     if coch:
         cot.append(["Estacionamiento", f"N° {coch['est']} · S/ {int(coch['precio']):,} · 16 m² · reja corrediza · partida independiente"])
         cot.append(["Precio total (depto + cochera)", f"S/ {P+int(coch['precio']):,}"])
+    cot.append([f"Inicial {int(ini_pct*100)}%",f"S/ {inicial:,}"])
     elems.append(sec_table("COTIZACIÓN",cot,W*0.42,W*0.58))
     elems.append(Spacer(1,10))
     elems.append(sec_table(f"CRONOGRAMA DE PAGOS – {forma.upper()}",crono,W*0.62,W*0.38))
