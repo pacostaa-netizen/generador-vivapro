@@ -19,9 +19,10 @@ def _findsoffice():
 
 def build_propuesta(cfg):
     cat=json.load(open(os.path.join(TPL,"deptos.json"),encoding="utf-8"))
-    dep=cat[str(cfg["codigo_depto"])]; P=float(cfg["precio_soles"])
+    dep=cat[str(cfg["codigo_depto"])]; coch=cfg.get("cochera")
+    P=float(cfg["precio_soles"])+(float(coch["precio"]) if coch else 0)
     rows=cfg["cronograma"]; hip=cfg.get("hipotecario")
-    directo=sum(C.monto_de(r,float(cfg["precio_soles"]))/float(cfg["precio_soles"])*100 for r in rows)
+    directo=sum(C.monto_de(r,P)/P*100 for r in rows)
     hip_pct=100-directo
     d=datetime.date.fromisoformat(cfg["fecha"]); num=dep["codigo"]; piso=dep["piso"]; tip=dep["tipologia"]; area=dep["area_m2"]
     nd={"un (01) dormitorio":1,"dos (02) dormitorios":2,"tres (03) dormitorios":3}.get(dep["dormitorios_txt"],3)
@@ -58,7 +59,7 @@ def build_propuesta(cfg):
                    "DNI: 44578531 — Estado civil: Soltera":f"DNI: {cfg['dni']} — Estado civil: {ec}",
                    "Señora:":trato,"Estimada Sra. Caballero":estim,
                    "Lima, 11 de junio de 2026":f"Lima, {flarga(d)}",
-                   "Departamento N.° 203, Piso 2.":f"Departamento N.° {num}, {piso}.",
+                   "Departamento N.° 203, Piso 2.":(f"Departamento N.° {num}, {piso}." + (f"  +  Estacionamiento N° {coch['est']} (16 m², reja corrediza no elevadiza, partida registral independiente)" if coch else "")),
                    "3 dormitorios (3D-A) — 76 m² de área techada.":f"{nd} dormitorio{'s' if nd!=1 else ''} ({tip}) — {area} m² de área techada.",
                    "Departamento 203":f"Departamento {num}","320,000.00":f"{P:,.2f}"}
                 if hip:

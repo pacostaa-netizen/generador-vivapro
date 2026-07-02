@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Generador de Documentos VIVA PRO — web (Streamlit). Cronograma de pago editable."""
+"""Generador de Documentos VIVA PRO — web (Streamlit). Cronograma editable + cochera."""
 import os, sys, json, tempfile, subprocess, datetime, zipfile, io
 import streamlit as st
 import pandas as pd
@@ -13,6 +13,7 @@ PLANOS=TPL
 DEPTOS=json.load(open(os.path.join(TPL,"deptos.json"),encoding="utf-8"))
 PLANTILLAS=["30% directo + 70% hipotecario","20% directo + 80% hipotecario",
             "50% directo + 50% hipotecario","40% directo + 4 armadas","Personalizada (en blanco)"]
+COCH_LISTA=59500
 
 def run_engine(script,cfg):
     fd,p=tempfile.mkstemp(suffix=".json"); os.close(fd); json.dump(cfg,open(p,"w",encoding="utf-8"))
@@ -27,14 +28,11 @@ st.caption("LA HAUS CONSTRUCTORA S.A.C. · Llena los datos y descarga los PDFs d
 
 st.subheader("Datos del cliente")
 c1,c2=st.columns(2)
-nombre=c1.text_input("Nombre completo *")
-apellido=c2.text_input("Apellido (para Sr./Sra.) *")
-sexo=c1.selectbox("Sexo",["F","M"])
-dni=c2.text_input("DNI *")
+nombre=c1.text_input("Nombre completo *"); apellido=c2.text_input("Apellido (para Sr./Sra.) *")
+sexo=c1.selectbox("Sexo",["F","M"]); dni=c2.text_input("DNI *")
 estado_civil=c1.selectbox("Estado civil",["Soltero","Soltera","Casado","Casada","Conviviente"])
 domicilio=c2.text_input("Domicilio")
-conyuge=c1.text_input("Cónyuge (si aplica)")
-conyuge_dni=c2.text_input("DNI cónyuge")
+conyuge=c1.text_input("Cónyuge (si aplica)"); conyuge_dni=c2.text_input("DNI cónyuge")
 telefono=c1.text_input("Teléfono"); correo=c2.text_input("Correo")
 
 st.subheader("Departamento")
@@ -43,35 +41,48 @@ cod=st.selectbox("Código de departamento *",sorted(DEPTOS.keys()),
 dep=DEPTOS[cod]
 st.info(f"Tipología {dep['tipologia']} · {dep['area_m2']} m² · {dep['piso']} · BBP estimado S/ {dep.get('bbp') or 0:,}")
 c3,c4=st.columns(2)
-precio=c3.number_input("Precio negociado (S/)",value=int(dep.get("precio_final_soles") or 0),step=1000)
+precio=c3.number_input("Precio negociado depto (S/)",value=int(dep.get("precio_final_soles") or 0),step=1000)
 unidad_n=c4.text_input("N° unidad registral")
 fecha=c3.date_input("Fecha",value=datetime.date.today()); n_sep=c4.text_input("N° separación",value="001")
+
+st.subheader("Cochera (opcional)")
+inc_coch=st.checkbox("Incluye cochera")
+cochera=None; coch_mode=None; coch_precio=0
+if inc_coch:
+    cc1,cc2=st.columns(2)
+    est=cc1.selectbox("Estacionamiento",["E01","E02","E03","E04","E05","E06"])
+    coch_precio=cc2.number_input("Precio cochera (S/)",value=COCH_LISTA,step=500)
+    forma=st.selectbox("Forma de pago de la cochera",
+        ["Sumada al total (entra al crédito)","Aparte — al contado a la firma","Aparte — en cuotas (mismas armadas)"])
+    coch_mode="sumada" if forma.startswith("Sumada") else ("contado" if "contado" in forma else "cuotas")
+    cochera={"est":est,"precio":int(coch_precio),"mode":coch_mode}
+    st.caption(f"Cochera {est} · 16 m² · reja corrediza (no elevadiza) · partida registral independiente · **Total con cochera: S/ {int(precio)+int(coch_precio):,}**")
+
+# base de precio para la tabla: si la cochera va SUMADA, la tabla es sobre el total
+precio_basis=int(precio)+int(coch_precio) if (cochera and coch_mode=="sumada") else int(precio)
 
 st.subheader("Estructura de pago")
 colp1,colp2=st.columns([2,1])
 plant=colp1.selectbox("Plantilla de pago",PLANTILLAS)
 incluir_hip=colp2.checkbox("Incluye hipotecario",value=("hipotecario" in plant))
-if st.session_state.get("_plant")!=plant or st.session_state.get("_precio")!=precio:
-    rows,_=C.plantilla(plant,precio); 
+if st.session_state.get("_plant")!=plant or st.session_state.get("_precio")!=precio_basis:
+    rows0,_=C.plantilla(plant,precio_basis)
     st.session_state["_df"]=pd.DataFrame([{"Concepto":r["concepto"],"Fecha":r.get("fecha",""),
-        "% precio":round(C.monto_de(r,precio)/precio*100,2)} for r in rows])
-    st.session_state["_plant"]=plant; st.session_state["_precio"]=precio
-st.caption("Edita Concepto, Fecha y % del precio. Agrega o quita armadas con + / 🗑. La separación queda fija en S/ 3,500.")
+        "% precio":round(C.monto_de(r,precio_basis)/precio_basis*100,2)} for r in rows0])
+    st.session_state["_plant"]=plant; st.session_state["_precio"]=precio_basis
+st.caption("Edita Concepto, Fecha y % del precio. Agrega o quita armadas. La separación queda fija en S/ 3,500.")
 df=st.data_editor(st.session_state["_df"],num_rows="dynamic",use_container_width=True,key="ed",
     column_config={"% precio":st.column_config.NumberColumn(format="%.2f %%",min_value=0.0,max_value=100.0)})
 directo_pct=float(df["% precio"].fillna(0).sum())
 if incluir_hip:
     st.success(f"Aporte directo {directo_pct:.2f}% · Crédito hipotecario {100-directo_pct:.2f}% (toma el saldo) · cuadra al 100%")
 else:
-    estado="✅ cuadra 100%" if abs(directo_pct-100)<0.5 else f"⚠️ suma {directo_pct:.2f}% (debe ser 100%)"
-    (st.success if abs(directo_pct-100)<0.5 else st.warning)(f"Sin hipotecario · {estado}")
+    (st.success if abs(directo_pct-100)<0.5 else st.warning)(f"Sin hipotecario · suma {directo_pct:.2f}% (debe ser 100%)")
 
 st.subheader("¿Qué generar?")
 g1,g2=st.columns(2)
-prop=g1.checkbox("Propuesta (cronograma de arriba)",value=True)
-sim=g2.checkbox("Simulación de crédito",value=True)
-fic=g1.checkbox("Ficha Técnica",value=True)
-con=g2.checkbox("Contrato de Separación",value=True)
+prop=g1.checkbox("Propuesta (cronograma de arriba)",value=True); sim=g2.checkbox("Simulación de crédito",value=True)
+fic=g1.checkbox("Ficha Técnica",value=True); con=g2.checkbox("Contrato de Separación",value=True)
 prof=g1.checkbox("Proforma (cotización)",value=False)
 
 if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"):
@@ -83,19 +94,31 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
     with tempfile.TemporaryDirectory() as out:
         base=dict(carpeta_salida=out,nombre=nombre,apellido=ape,sexo=sexo,dni=dni,estado_civil=estado_civil,
             conyuge=conyuge or None,conyuge_dni=conyuge_dni,domicilio=domicilio,telefono=telefono,correo=correo,
-            codigo_depto=cod,unidad_n=unidad_n,precio_soles=int(precio) or None,separacion_soles=3500,separacion_usd=1000,
+            codigo_depto=cod,unidad_n=unidad_n,precio_soles=int(precio),separacion_soles=3500,separacion_usd=1000,
             fecha=fecha.isoformat(),n_sep=n_sep,planos_dir=PLANOS)
+        if cochera: base["cochera"]=cochera
         errs=[]
         with st.spinner("Generando documentos..."):
-            # cronograma a filas para el motor
             rows=[]
             for _,r in df.iterrows():
-                con=r["Concepto"]
-                if pd.isna(con) or not str(con).strip(): continue
+                c_=r["Concepto"]
+                if pd.isna(c_) or not str(c_).strip(): continue
                 pv=r["% precio"]; pctv=0.0 if pd.isna(pv) else float(pv)
                 fec="" if pd.isna(r["Fecha"]) else str(r["Fecha"]).strip()
-                monto=3500.0 if str(con).strip().lower().startswith("separaci") else precio*pctv/100
-                rows.append({"concepto":str(con).strip(),"fecha":fec,"monto":monto})
+                es_sep=str(c_).strip().lower().startswith("separaci")
+                monto=3500.0 if es_sep else precio_basis*pctv/100
+                if monto<=0 and not es_sep: continue
+                rows.append({"concepto":str(c_).strip(),"fecha":fec,"monto":monto})
+            # cochera APARTE: agregar línea(s)
+            if cochera and coch_mode in ("contado","cuotas"):
+                sub2="Cochera 16 m² · reja corrediza (no elevadiza) · partida registral independiente."
+                armadas=[r for r in rows if "Armada" in r["concepto"]]
+                if coch_mode=="cuotas" and armadas:
+                    n=len(armadas)
+                    for k,ar in enumerate(armadas):
+                        rows.append({"concepto":f"Estacionamiento N° {cochera['est']} (cuota {k+1}/{n})","fecha":ar["fecha"],"monto":coch_precio/n,"sub2":sub2 if k==0 else None})
+                else:
+                    rows.append({"concepto":f"Estacionamiento N° {cochera['est']} (al contado)","fecha":"A la firma del contrato.","monto":float(coch_precio),"sub2":sub2})
             hip={"concepto":"Saldo con crédito hipotecario","fecha":"Contra entrega (diciembre de 2027).",
                  "sub2":"Tasa, plazo y cuota los define el banco."} if incluir_hip else None
             inicial_pct=round(directo_pct/100,4) if incluir_hip else 0.20
@@ -105,7 +128,6 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
             if sim or fic or con:
                 cfg=dict(base,opciones=[],incluir_simulacion=sim,plazo_anios=20,tipo_cuota="Simple",
                          tea_mivivienda=0.09,tea_tradicional=0.09,inicial_pct=inicial_pct)
-                # ficha/contrato siempre; si no se quiere alguno se borra luego
                 ok,log=run_engine("generar_paquete.py",cfg)
                 if not ok: errs.append("Paquete: "+log)
                 if not fic:

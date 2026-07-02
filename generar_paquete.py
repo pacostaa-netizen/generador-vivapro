@@ -11,9 +11,10 @@ from openpyxl.worksheet.properties import PageSetupProperties
 from PIL import Image
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-TPL  = BASE
+TPL  = os.path.join(BASE, "plantillas")
+if not os.path.exists(os.path.join(TPL, "deptos.json")): TPL = BASE
 # Carpeta de planos: por defecto relativa a la raiz del proyecto; se puede pasar planos_dir en el cfg
-DEFAULT_PLANOS = BASE
+DEFAULT_PLANOS = os.path.normpath(os.path.join(BASE, "..", "..", "05_MARKETING_Y_MARCA", "04_Renders", "Plantas"))
 MESES = ["enero","febrero","marzo","abril","mayo","junio","julio",
          "agosto","septiembre","octubre","noviembre","diciembre"]
 
@@ -51,24 +52,14 @@ def render_docx(tpl_path, out_path, repl, media_swap=None):
             zout.writestr(item, data)
     os.replace(tmp, out_path)
 
-import shutil as _sh
-def _find_soffice():
-    for c in ("libreoffice","soffice","soffice.exe"):
-        p=_sh.which(c)
-        if p: return p
-    for p in (r"C:\\Program Files\\LibreOffice\\program\\soffice.exe",
-              r"C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe",
-              "/Applications/LibreOffice.app/Contents/MacOS/soffice"):
-        if os.path.exists(p): return p
-    raise RuntimeError("No se encontró LibreOffice. Instálalo desde https://www.libreoffice.org/download/ y vuelve a intentar.")
 def to_pdf(path, out_dir):
-    so=_find_soffice()
-    env=dict(os.environ); env.setdefault("HOME", os.path.expanduser("~") or "/tmp")
-    subprocess.run([so,"--headless","--convert-to","pdf","--outdir",out_dir,path],
-                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
+    subprocess.run(["libreoffice","--headless","--convert-to","pdf","--outdir",out_dir,path],
+                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                   env={**os.environ,"HOME":"/tmp"})
 
 def construir(cfg, dep):
     P=float(cfg["precio_soles"]); S=float(cfg.get("separacion_soles",3500)); sep_usd=float(cfg.get("separacion_usd",1000))
+    coch=cfg.get("cochera"); Pcontrato=P+float(coch["precio"]) if coch else P
     p20=P*0.20; p20_sep=p20-S; inicial40=P*0.40; armada=P*0.15; saldo60=P-inicial40; half50=P*0.50; p10=P*0.10
     d=datetime.date.fromisoformat(cfg["fecha"]); yyyy=d.year
     num=dep["codigo"]; piso=dep["piso"]; tip=dep["tipologia"]; area=dep["area_m2"]
@@ -99,13 +90,16 @@ def construir(cfg, dep):
         "tres (03) dormitorios y dos (02) baños":f"{dorm} y {banos}",
         "en el piso 2 del proyecto VIVA PRO":f"en el {piso.lower()} del proyecto VIVA PRO",
         "Departamento 203":f"Departamento {num}",
-        "320,000.00":m2(P),"128,000.00":m2(inicial40),"192,000.00":m2(saldo60),"160,000.00":m2(half50),
+        "320,000.00":m2(Pcontrato),"128,000.00":m2(inicial40),"192,000.00":m2(saldo60),"160,000.00":m2(half50),
         "64,000.00":m2(p20),"60,500.00":m2(p20_sep),"48,000.00":m2(armada),"32,000.00":m2(p10),"3,500.00":m2(S),
         "S/ 64,000 menos separación":f"S/ {m0(p20)} menos separación",
         "1.09 %":pct(S/P*100),"18.91 %":pct(p20_sep/P*100),
-        "TRESCIENTOS VEINTE MIL CON 00/100 SOLES":palabras_soles(P),
+        "TRESCIENTOS VEINTE MIL CON 00/100 SOLES":palabras_soles(Pcontrato),
         "TRES MIL QUINIENTOS CON 00/100 SOLES":palabras_soles(S),"US$ 1,000.00":f"US$ {m2(sep_usd)}",
     }
+    if coch:
+        R["estacionamiento no incluido"]=f"estacionamiento N° {coch['est']} (16 m², con reja corrediza no elevadiza y partida registral independiente)"
+        R["Departamento Nº 203 – Piso 2 – Tipología 3D-A"]=f"Departamento Nº {num} – {piso} – Tipología {tip} + Estac. N° {coch['est']}"
     if cfg.get("conyuge"): R["No aplica – DNI No aplica"]=f"{cfg['conyuge']} – DNI {cfg.get('conyuge_dni','')}"
     if sexo=="M": R["la clienta"]="el cliente"
     return R
@@ -118,7 +112,7 @@ def generar_simulacion(cfg, dep, out, num, ape):
     ws["D5"]=cfg["nombre"].upper(); ws["D6"]=str(num)
     ws["D8"]=cfg.get("plazo_anios",20); ws["D9"]=cfg.get("tipo_cuota","Simple")
     ws["D12"]=cfg.get("tea_mivivienda",0.09); ws["D13"]=cfg.get("tea_tradicional",0.09)
-    ws["D17"]=cfg.get("inicial_pct",0.20); ws["D22"]=float(cfg["precio_soles"])
+    ws["D17"]=cfg.get("inicial_pct",0.20); ws["D22"]=float(cfg.get("sim_precio",cfg["precio_soles"]))
     for h in ("Lista de Precios","Cronograma de Pago"):
         if h in wb.sheetnames: wb[h].sheet_state="hidden"
     ws.print_area="B1:E36"
@@ -154,6 +148,8 @@ def main():
     if cod not in cat: sys.exit(f"Código '{cod}' no está en catálogo. Disponibles: {', '.join(cat)}")
     dep=cat[cod]
     if not cfg.get("precio_soles"): cfg["precio_soles"]=dep["precio_final_soles"]
+    _c=cfg.get("cochera")
+    cfg["sim_precio"]=(cfg["precio_soles"]+float(_c["precio"])) if (_c and _c.get("mode")=="sumada") else cfg["precio_soles"]
     out=cfg["carpeta_salida"]; os.makedirs(out,exist_ok=True)
     repl=construir(cfg,dep); ape=cfg.get("apellido","Cliente").replace(" ",""); num=dep["codigo"]
     planos_dir=cfg.get("planos_dir",DEFAULT_PLANOS)
