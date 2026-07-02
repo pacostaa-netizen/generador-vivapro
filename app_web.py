@@ -41,7 +41,7 @@ cod=st.selectbox("Código de departamento *",sorted(DEPTOS.keys()),
 dep=DEPTOS[cod]
 st.info(f"Tipología {dep['tipologia']} · {dep['area_m2']} m² · {dep['piso']} · BBP estimado S/ {dep.get('bbp') or 0:,}")
 c3,c4=st.columns(2)
-precio=c3.number_input("Precio negociado depto (S/)",value=int(dep.get("precio_final_soles") or 0),step=1000)
+precio=c3.number_input("Precio negociado depto (S/)",value=int(dep.get("precio_lista_soles") or dep.get("precio_final_soles") or 0),step=1000)
 unidad_n=c4.text_input("N° unidad registral")
 fecha=c3.date_input("Fecha",value=datetime.date.today()); n_sep=c4.text_input("N° separación",value="001")
 
