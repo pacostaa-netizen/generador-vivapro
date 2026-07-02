@@ -59,7 +59,10 @@ def build(cfg):
     deptxt=f"{nd} Dormitorio{'s' if nd!=1 else ''} / {nb} Baño{'s' if nb!=1 else ''}"
     planos=cfg.get("planos_dir",DEFAULT_PLANOS)
     out=cfg["carpeta_salida"]; os.makedirs(out,exist_ok=True)
-    ini_pct=cfg.get("inicial_pct",0.40); inicial=round(P*ini_pct)
+    ini_pct=cfg.get("inicial_pct",0.40)
+    _coch=cfg.get("cochera")
+    _base_ini=P+int(_coch["precio"]) if (_coch and _coch.get("mode")=="sumada") else P
+    inicial=round(_base_ini*ini_pct)
     # cronograma: usar el dado o el estándar Crédito Directo 40%+4x15%
     crono=cfg.get("cronograma")
     if not crono:
