@@ -64,8 +64,8 @@ def plantilla(nombre, precio, sep=3500.0):
           {"concepto":"3.ª Armada","fecha":"Octubre de 2027.","monto":P*0.15},
           {"concepto":"4.ª Armada (contra entrega)","fecha":"Diciembre de 2027.","monto":P*0.15}]
         return rows,None
-    pcts={"30% directo + 70% hipotecario":(0.30,0.70),"20% directo + 80% hipotecario":(0.20,0.80),
-          "50% directo + 50% hipotecario":(0.50,0.50)}
+    pcts={"10% directo + 90% hipotecario":(0.10,0.90),"20% directo + 80% hipotecario":(0.20,0.80),
+          "30% directo + 70% hipotecario":(0.30,0.70),"50% directo + 50% hipotecario":(0.50,0.50)}
     if nombre in pcts:
         di,hi=pcts[nombre]; firma=P*0.15 if di>=0.30 else P*0.10
         rows=[seprow,{"concepto":"Saldo a la firma","fecha":"A la firma (notaría / inicio de obra).","monto":firma-sep}]
