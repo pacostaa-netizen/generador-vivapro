@@ -32,12 +32,12 @@ def build_propuesta(cfg):
     # textos dinámicos
     if hip:
         paren=f"{directo:.0f}% aporte directo + {hip_pct:.0f}% crédito hipotecario contra entrega"
-        introtxt=f"{directo:.0f}% del precio cancelado directamente a LA HAUS en aportes fraccionados durante la construcción, y el {hip_pct:.0f}% restante mediante crédito hipotecario contra entrega del inmueble."
-        secbody=f"El {directo:.0f}% del precio se cancela directamente a LA HAUS en aportes fraccionados durante la construcción, y el {hip_pct:.0f}% restante se desembolsa al momento de la entrega mediante crédito hipotecario que {'la clienta' if sexo=='F' else 'el cliente'} tramitará con el banco de su elección:"
+        introtxt=f"{directo:.0f}% del precio cancelado directamente a LA HAUS, y el {hip_pct:.0f}% restante mediante crédito hipotecario contra entrega del inmueble."
+        secbody=f"El {directo:.0f}% del precio se cancela directamente a LA HAUS, y el {hip_pct:.0f}% restante se desembolsa al momento de la entrega mediante crédito hipotecario que {'la clienta' if sexo=='F' else 'el cliente'} tramitará con el banco de su elección:"
         head="PLAN PERSONALIZADO (CON CRÉDITO HIPOTECARIO)"
     else:
         paren=f"financiamiento directo con LA HAUS en {narm} armadas"
-        introtxt=f"el precio se cancela íntegramente a LA HAUS en aportes fraccionados durante la construcción ({directo:.0f}% directo), sin intervención bancaria."
+        introtxt=f"el precio se cancela íntegramente a LA HAUS ({directo:.0f}% directo), sin intervención bancaria."
         secbody="El precio de venta se cancela directamente a LA HAUS, sin intervención bancaria, conforme al siguiente cronograma:"
         head="PLAN PERSONALIZADO (FINANCIAMIENTO DIRECTO)"
     table=C.build_table(rows,P,hip)

@@ -144,14 +144,13 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
                     crono_p.append(["Saldo con crédito hipotecario (contra entrega)", f"S/ {round(saldo):,}"])
                 ok,log=run_engine("generar_proforma.py",dict(base,forma_pago=forma_lbl,inicial_pct=round(directo_pct/100,4),cronograma=crono_p))
                 if not ok: errs.append("Proforma: "+log)
-            pdfs=[f for f in os.listdir(out) if f.lower().endswith(".pdf")]
-        if errs: st.error("Problemas:\n\n"+"\n\n".join(errs))
-        if pdfs:
-            st.success(f"✅ {len(pdfs)} documento(s) generado(s).")
-            buf=io.BytesIO()
-            with zipfile.ZipFile(buf,"w",zipfile.ZIP_DEFLATED) as z:
-                for f in sorted(pdfs): z.write(os.path.join(out,f),f)
-            st.download_button("⬇️ Descargar todo (ZIP)",buf.getvalue(),file_name=f"Documentos_{ape}_{cod}.zip",
-                mime="application/zip",use_container_width=True)
-            for f in sorted(pdfs):
-                st.download_button("⬇️ "+f,open(os.path.join(out,f),"rb").read(),file_name=f,mime="application/pdf")
+            # numerar nombres para que se ordenen: 1.Proforma 2.Ficha 3.Propuesta 4.Simulacion 5.Contrato
+            _ordn=[("proforma","1"),("ficha","2"),("propuesta","3"),("simulacion","4"),("simulación","4"),("contrato","5")]
+            for f in list(os.listdir(out)):
+                if not f.lower().endswith(".pdf"): continue
+                base_f=f.split(". ",1)[1] if f[:2].strip().rstrip(".").isdigit() and ". " in f[:4] else f
+                pref=next((n for k,n in _ordn if base_f.lower().startswith(k)),None)
+                if pref and f!=f"{pref}. {base_f}":
+                    try: os.rename(os.path.join(out,f),os.path.join(out,f"{pref}. {base_f}"))
+                    except Exception: pass
+            pdf
