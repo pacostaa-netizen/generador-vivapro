@@ -53,9 +53,13 @@ if inc_coch:
     est=cc1.selectbox("Estacionamiento",["E01","E02","E03","E04","E05","E06"])
     coch_precio=cc2.number_input("Precio cochera (S/)",value=COCH_LISTA,step=500)
     forma=st.selectbox("Forma de pago de la cochera",
-        ["Sumada al total (entra al crédito)","Aparte — al contado a la firma","Aparte — en cuotas (mismas armadas)"])
-    coch_mode="sumada" if forma.startswith("Sumada") else ("contado" if "contado" in forma else "cuotas")
-    cochera={"est":est,"precio":int(coch_precio),"mode":coch_mode}
+        ["Se incorpora al crédito hipotecario","Se incorpora al crédito directo",
+         "Al contado — a la firma del contrato de bien futuro","Al contado — a la firma de la escritura pública"])
+    if forma.startswith("Se incorpora"):
+        coch_mode="sumada"; coch_fecha=None
+    else:
+        coch_mode="contado"; coch_fecha=("A la firma del contrato de bien futuro." if "bien futuro" in forma else "A la firma de la escritura pública.")
+    cochera={"est":est,"precio":int(coch_precio),"mode":coch_mode,"nota":forma,"fecha":coch_fecha}
     st.caption(f"Cochera {est} · 16 m² · reja corrediza (no elevadiza) · partida registral independiente · **Total con cochera: S/ {int(precio)+int(coch_precio):,}**")
 
 # base de precio para la tabla: si la cochera va SUMADA, la tabla es sobre el total
@@ -110,15 +114,9 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
                 if monto<=0 and not es_sep: continue
                 rows.append({"concepto":str(c_).strip(),"fecha":fec,"monto":monto})
             # cochera APARTE: agregar línea(s)
-            if cochera and coch_mode in ("contado","cuotas"):
+            if cochera and coch_mode=="contado":
                 sub2="Cochera 16 m² · reja corrediza (no elevadiza) · partida registral independiente."
-                armadas=[r for r in rows if "Armada" in r["concepto"]]
-                if coch_mode=="cuotas" and armadas:
-                    n=len(armadas)
-                    for k,ar in enumerate(armadas):
-                        rows.append({"concepto":f"Estacionamiento N° {cochera['est']} (cuota {k+1}/{n})","fecha":ar["fecha"],"monto":coch_precio/n,"sub2":sub2 if k==0 else None})
-                else:
-                    rows.append({"concepto":f"Estacionamiento N° {cochera['est']} (al contado)","fecha":"A la firma del contrato.","monto":float(coch_precio),"sub2":sub2})
+                rows.append({"concepto":f"Estacionamiento N° {cochera['est']} (al contado)","fecha":cochera.get("fecha") or "A la firma del contrato.","monto":float(coch_precio),"sub2":sub2})
             hip={"concepto":"Saldo con crédito hipotecario","fecha":"Contra entrega (diciembre de 2027).",
                  "sub2":"Tasa, plazo y cuota los define el banco."} if incluir_hip else None
             inicial_pct=round(directo_pct/100,4) if incluir_hip else 0.20
