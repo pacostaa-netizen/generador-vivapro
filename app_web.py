@@ -95,7 +95,7 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
         st.warning("Completa al menos Nombre, DNI y Departamento."); st.stop()
     if not incluir_hip and prop and abs(directo_pct-100)>0.5:
         st.warning("Sin hipotecario, el cronograma debe sumar 100%. Ajusta los %."); st.stop()
-    ape=(apellido or nombre.split()[0]).replace(" ","")
+    ape=(apellido or nombre.split()[0]).strip()
     with tempfile.TemporaryDirectory() as out:
         base=dict(carpeta_salida=out,nombre=nombre,apellido=ape,sexo=sexo,dni=dni,estado_civil=estado_civil,
             conyuge=conyuge or None,conyuge_dni=conyuge_dni,domicilio=domicilio,telefono=telefono,correo=correo,
