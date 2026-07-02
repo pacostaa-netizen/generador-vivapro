@@ -100,6 +100,7 @@ def construir(cfg, dep):
     if coch:
         R["estacionamiento no incluido"]=f"estacionamiento N° {coch['est']} (16 m², con reja corrediza no elevadiza y partida registral independiente)"
         R["Departamento Nº 203 – Piso 2 – Tipología 3D-A"]=f"Departamento Nº {num} – {piso} – Tipología {tip} + Estac. N° {coch['est']}"
+        R["Cochera con piso de cemento pulido (no incluida en la presente unidad)."]=f"Estacionamiento N° {coch['est']} incluido: piso de cemento pulido, reja corrediza (no elevadiza), con partida registral independiente."
     if cfg.get("conyuge"): R["No aplica – DNI No aplica"]=f"{cfg['conyuge']} – DNI {cfg.get('conyuge_dni','')}"
     if sexo=="M": R["la clienta"]="el cliente"
     return R

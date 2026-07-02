@@ -12,8 +12,8 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from PIL import Image as PILImage
 
-BASE=os.path.dirname(os.path.abspath(__file__)); TPL=BASE
-DEFAULT_PLANOS=BASE
+BASE=os.path.dirname(os.path.abspath(__file__)); TPL=os.path.join(BASE,"plantillas")
+DEFAULT_PLANOS=os.path.normpath(os.path.join(BASE,"..","..","05_MARKETING_Y_MARCA","04_Renders","Plantas"))
 GRAY=colors.HexColor("#EAEAEA"); BORDER=colors.HexColor("#C9C9C9"); DARK=colors.HexColor("#2B2B2B")
 PW,PH=A4; MX=42
 
@@ -74,6 +74,10 @@ def build(cfg):
     cot=[["Departamento",deptxt],["Área",f"{dep['area_m2']} m²"],
          ["Nivel / Código",f"{dep['piso']} - {cod}"],["Precio del departamento",f"S/ {P:,}"],
          ["Forma de pago",forma],[f"Inicial {int(ini_pct*100)}%",f"S/ {inicial:,}"]]
+    coch=cfg.get("cochera")
+    if coch:
+        cot.append(["Estacionamiento", f"N° {coch['est']} · S/ {int(coch['precio']):,} · 16 m² · reja corrediza · partida independiente"])
+        cot.append(["Precio total (depto + cochera)", f"S/ {P+int(coch['precio']):,}"])
     elems.append(sec_table("COTIZACIÓN",cot,W*0.42,W*0.58))
     elems.append(Spacer(1,10))
     elems.append(sec_table(f"CRONOGRAMA DE PAGOS – {forma.upper()}",crono,W*0.62,W*0.38))
