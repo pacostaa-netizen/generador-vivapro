@@ -153,4 +153,14 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
                 if pref and f!=f"{pref}. {base_f}":
                     try: os.rename(os.path.join(out,f),os.path.join(out,f"{pref}. {base_f}"))
                     except Exception: pass
-            pdf
+            pdfs=[f for f in os.listdir(out) if f.lower().endswith(".pdf")]
+        if errs: st.error("Problemas:\n\n"+"\n\n".join(errs))
+        if pdfs:
+            st.success(f"✅ {len(pdfs)} documento(s) generado(s).")
+            buf=io.BytesIO()
+            with zipfile.ZipFile(buf,"w",zipfile.ZIP_DEFLATED) as z:
+                for f in sorted(pdfs): z.write(os.path.join(out,f),f)
+            st.download_button("⬇️ Descargar todo (ZIP)",buf.getvalue(),file_name=f"Documentos_{ape}_{cod}.zip",
+                mime="application/zip",use_container_width=True)
+            for f in sorted(pdfs):
+                st.download_button("⬇️ "+f,open(os.path.join(out,f),"rb").read(),file_name=f,mime="application/pdf")
