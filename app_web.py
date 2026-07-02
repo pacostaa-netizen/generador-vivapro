@@ -136,7 +136,13 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
                     for f in list(os.listdir(out)):
                         if f.startswith("Contrato_"): os.remove(os.path.join(out,f))
             if prof:
-                ok,log=run_engine("generar_proforma.py",dict(base,forma_pago="Crédito Directo",inicial_pct=0.40))
+                forma_lbl=plant if not str(plant).startswith("Personalizada") else "Plan personalizado"
+                grand=int(precio)+(int(coch_precio) if cochera else 0)
+                crono_p=[[r["concepto"], f"S/ {round(r['monto']):,}"] for r in rows]
+                if hip:
+                    saldo=grand-sum(r["monto"] for r in rows)
+                    crono_p.append(["Saldo con crédito hipotecario (contra entrega)", f"S/ {round(saldo):,}"])
+                ok,log=run_engine("generar_proforma.py",dict(base,forma_pago=forma_lbl,inicial_pct=round(directo_pct/100,4),cronograma=crono_p))
                 if not ok: errs.append("Proforma: "+log)
             pdfs=[f for f in os.listdir(out) if f.lower().endswith(".pdf")]
         if errs: st.error("Problemas:\n\n"+"\n\n".join(errs))
