@@ -13,6 +13,7 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from PIL import Image as PILImage
 
 BASE=os.path.dirname(os.path.abspath(__file__)); TPL=os.path.join(BASE,"plantillas")
+if not os.path.exists(os.path.join(TPL,"deptos.json")): TPL=BASE
 DEFAULT_PLANOS=os.path.normpath(os.path.join(BASE,"..","..","05_MARKETING_Y_MARCA","04_Renders","Plantas"))
 GRAY=colors.HexColor("#EAEAEA"); BORDER=colors.HexColor("#C9C9C9"); DARK=colors.HexColor("#2B2B2B")
 PW,PH=A4; MX=42
