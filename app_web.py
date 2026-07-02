@@ -12,8 +12,8 @@ if not os.path.exists(os.path.join(TPL,"deptos.json")): TPL=APPDIR
 PLANOS=TPL
 DEPTOS=json.load(open(os.path.join(TPL,"deptos.json"),encoding="utf-8"))
 PLANTILLAS=["10% directo + 90% hipotecario","20% directo + 80% hipotecario",
-            "30% directo + 70% hipotecario","50% directo + 50% hipotecario",
-            "40% directo + 4 armadas","Personalizada (en blanco)"]
+            "30% directo + 70% hipotecario","40% directo + 60% hipotecario",
+            "50% directo + 50% hipotecario","40% directo + 4 armadas","Personalizada (en blanco)"]
 COCH_LISTA=59500
 
 def run_engine(script,cfg):
