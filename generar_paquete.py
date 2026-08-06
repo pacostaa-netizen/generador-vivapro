@@ -58,8 +58,8 @@ def fit_canvas(src, cw=1536, ch=2752):
     canvas.paste(im2, ((cw-nw)//2, (ch-nh)//2))
     buf = io.BytesIO(); canvas.save(buf, "JPEG", quality=90); return buf.getvalue()
 
-# Marco máx. del plano en la ficha (EMU): ancho 14 cm, alto 13.44 cm (A4, útil ~16 cm)
-PLANO_MAXW, PLANO_MAXH = 5040000, 4837500
+# Marco máx. del plano en la ficha (EMU): ancho 14 cm, alto 16 cm (A4, útil ~16 cm ancho / ~20 cm alto)
+PLANO_MAXW, PLANO_MAXH = 5040000, 5760000
 def fit_frame(src, maxw=PLANO_MAXW, maxh=PLANO_MAXH):
     """Ajusta el marco del plano a su aspecto real (sin barras blancas ni deformar).
     Devuelve (bytes_jpeg, cx_emu, cy_emu) maximizando dentro de maxw x maxh."""
