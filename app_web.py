@@ -28,7 +28,14 @@ st.title("🏢 Generador de Documentos — VIVA PRO")
 st.caption("LA HAUS CONSTRUCTORA S.A.C. · Llena los datos y descarga los PDFs del cliente.")
 
 st.subheader("Datos del cliente")
-nombre=st.text_input("Nombre completo (nombres y apellidos) *")
+def _titlecase_nombre(s):
+    minus={"de","del","la","las","los","y","da","do"}
+    out=[]
+    for i,w in enumerate((s or "").split()):
+        lw=w.lower()
+        out.append(lw if (lw in minus and i>0) else lw[:1].upper()+lw[1:])
+    return " ".join(out)
+nombre=_titlecase_nombre(st.text_input("Nombre completo (nombres y apellidos) *"))
 c1,c2=st.columns(2)
 sexo=c1.selectbox("Sexo",["F","M"]); dni=c2.text_input("DNI *")
 estado_civil=c1.selectbox("Estado civil",["Soltero","Soltera","Casado","Casada","Conviviente"])
