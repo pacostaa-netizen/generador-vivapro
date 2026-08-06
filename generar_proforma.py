@@ -76,9 +76,13 @@ def build(cfg):
     _nom=(str(cfg.get("nombre","")).strip()+" "+str(cfg.get("apellido","")).strip()).strip()
     elems.append(sec_table("DATOS DEL CLIENTE",[["Nombre",_nom]],W*0.42,W*0.58))
     elems.append(Spacer(1,10))
-    cot=[["Departamento",deptxt],["Área",f"{dep['area_m2']} m²"],
-         ["Nivel / Código",f"{dep['piso']} - {cod}"],["Precio del departamento",f"S/ {P:,}"],
-         ["Forma de pago",forma]]
+    _terr=dep.get("terraza_m2")
+    cot=[["Departamento",deptxt],
+         ["Área techada" if _terr else "Área",f"{dep['area_m2']} m²"]]
+    if _terr:
+        cot.append(["Área de terraza (no techada)",f"{_terr} m² (azotea, incluida en el precio; entrega con piso cerámico)"])
+    cot+=[["Nivel / Código",f"{dep['piso']} - {cod}"],["Precio del departamento",f"S/ {P:,}"],
+          ["Forma de pago",forma]]
     coch=cfg.get("cochera")
     if coch:
         cot.append(["Estacionamiento", f"N° {coch['est']} · S/ {int(coch['precio']):,} · 16 m² · reja corrediza · partida independiente"])
