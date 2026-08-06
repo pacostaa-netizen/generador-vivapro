@@ -58,6 +58,28 @@ def fit_canvas(src, cw=1536, ch=2752):
     canvas.paste(im2, ((cw-nw)//2, (ch-nh)//2))
     buf = io.BytesIO(); canvas.save(buf, "JPEG", quality=90); return buf.getvalue()
 
+# Marco máx. del plano en la ficha (EMU): ancho 14 cm, alto 13.44 cm (A4, útil ~16 cm)
+PLANO_MAXW, PLANO_MAXH = 5040000, 4837500
+def fit_frame(src, maxw=PLANO_MAXW, maxh=PLANO_MAXH):
+    """Ajusta el marco del plano a su aspecto real (sin barras blancas ni deformar).
+    Devuelve (bytes_jpeg, cx_emu, cy_emu) maximizando dentro de maxw x maxh."""
+    im = Image.open(src)
+    if im.mode in ("RGBA","LA","P"):
+        im = im.convert("RGBA"); bg = Image.new("RGB", im.size, (255,255,255))
+        bg.paste(im, mask=im.split()[-1]); im = bg
+    else:
+        im = im.convert("RGB")
+    w, h = im.size; a = w/h
+    cap = 1800
+    if max(w,h) > cap:
+        sc = cap/max(w,h); im = im.resize((int(w*sc), int(h*sc)), Image.LANCZOS); w,h = im.size
+    if a >= maxw/maxh:
+        cx = maxw; cy = int(maxw/a)
+    else:
+        cy = maxh; cx = int(maxh*a)
+    buf = io.BytesIO(); im.save(buf, "JPEG", quality=90)
+    return buf.getvalue(), cx, cy
+
 def _remove_tr(xml, marker):
     """Elimina la fila <w:tr> de tabla que contiene el texto `marker`."""
     i = xml.find(marker)
@@ -66,7 +88,7 @@ def _remove_tr(xml, marker):
     if s == -1 or e == -1: return xml
     return xml[:s] + xml[e+len("</w:tr>"):]
 
-def render_docx(tpl_path, out_path, repl, media_swap=None, remove_rows=None):
+def render_docx(tpl_path, out_path, repl, media_swap=None, remove_rows=None, img_extent=None):
     shutil.copyfile(tpl_path, out_path)
     tmp = out_path + ".tmp"
     with zipfile.ZipFile(out_path,"r") as zin, zipfile.ZipFile(tmp,"w",zipfile.ZIP_DEFLATED) as zout:
@@ -78,6 +100,8 @@ def render_docx(tpl_path, out_path, repl, media_swap=None, remove_rows=None):
                     xml = xml.replace(old,new)
                 for marker in (remove_rows or []):
                     xml = _remove_tr(xml, marker)
+                if img_extent:
+                    xml = xml.replace('cx="2700000" cy="4837500"', 'cx="%d" cy="%d"' % img_extent)
                 data = xml.encode("utf-8")
             elif media_swap and item.filename in media_swap:
                 data = media_swap[item.filename]
@@ -188,12 +212,13 @@ def main():
     out=cfg["carpeta_salida"]; os.makedirs(out,exist_ok=True)
     repl=construir(cfg,dep); ape=cfg.get("apellido","Cliente").replace(" ",""); num=dep["codigo"]
     planos_dir=cfg.get("planos_dir",DEFAULT_PLANOS)
-    # swap del plano de la ficha
-    ficha_swap=None
+    # swap del plano de la ficha (marco ajustado al aspecto real del plano)
+    ficha_swap=None; ficha_extent=None
     if dep.get("plano"):
         pf=os.path.join(planos_dir,dep["plano"])
         if os.path.exists(pf):
-            ficha_swap={"word/media/plano_distribucion.jpeg": fit_canvas(pf)}
+            _b,_cx,_cy=fit_frame(pf)
+            ficha_swap={"word/media/plano_distribucion.jpeg": _b}; ficha_extent=(_cx,_cy)
     # Ficha: ajustar el "cuadro de acabados por ambiente" a la tipologia real
     ndd={"un (01) dormitorio":1,"dos (02) dormitorios":2,"tres (03) dormitorios":3}.get(dep["dormitorios_txt"],3)
     nbb=1 if "un (01)" in dep["banos_txt"] else 2
@@ -217,7 +242,7 @@ def main():
         extra=rest[0] if len(rest)>0 else None
         rrows=rest[1] if len(rest)>1 else None
         rr=dict(repl,**extra) if extra else repl
-        dx=os.path.join(out,name); render_docx(os.path.join(TPL,tpl),dx,rr,swap,remove_rows=rrows); to_pdf(dx,out); print("OK",name)
+        dx=os.path.join(out,name); render_docx(os.path.join(TPL,tpl),dx,rr,swap,remove_rows=rrows,img_extent=(ficha_extent if swap else None)); to_pdf(dx,out); print("OK",name)
     if cfg.get("incluir_simulacion",True):
         s=generar_simulacion(cfg,dep,out,num,ape)
         if s: print("OK",s)
