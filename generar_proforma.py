@@ -73,7 +73,8 @@ def build(cfg):
     forma=cfg.get("forma_pago","Crédito Directo")
     W=PW-2*MX
     elems=[Spacer(1,52)]
-    _nom=(str(cfg.get("nombre","")).strip()+" "+str(cfg.get("apellido","")).strip()).strip()
+    _n=str(cfg.get("nombre","")).strip(); _a=str(cfg.get("apellido","")).strip()
+    _nom=_n if (_a and _a.upper() in _n.upper()) else (_n+" "+_a).strip()
     elems.append(sec_table("DATOS DEL CLIENTE",[["Nombre",_nom]],W*0.42,W*0.58))
     elems.append(Spacer(1,10))
     _terr=dep.get("terraza_m2")
