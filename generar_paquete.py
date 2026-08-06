@@ -29,7 +29,8 @@ def _ec_sexo(ec, sexo):
     base={"soltero":("Soltero","Soltera"),"soltera":("Soltero","Soltera"),
           "casado":("Casado","Casada"),"casada":("Casado","Casada"),
           "viudo":("Viudo","Viuda"),"viuda":("Viudo","Viuda"),
-          "divorciado":("Divorciado","Divorciada"),"divorciada":("Divorciado","Divorciada")}
+          "divorciado":("Divorciado","Divorciada"),"divorciada":("Divorciado","Divorciada"),
+          "conviviente":("Conviviente","Conviviente")}
     k=ec.strip().lower()
     if k in base: return base[k][0] if sexo=="M" else base[k][1]
     return ec
