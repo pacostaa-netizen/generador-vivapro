@@ -134,6 +134,8 @@ def construir(cfg, dep):
         R["Estacionamiento con piso de cemento pulido (no incluido en la presente unidad)."]=f"Estacionamiento N° {coch['est']} incluido: piso de cemento pulido, reja corrediza (no elevadiza), con partida registral independiente."
     if cfg.get("conyuge"): R["No aplica – DNI No aplica"]=f"{cfg['conyuge']} – DNI {cfg.get('conyuge_dni','')}"
     if sexo=="M": R["la clienta"]="el cliente"
+    _terr=dep.get("terraza_m2")
+    if _terr: R["XX m² (área no techada)."]=f"{_terr} m² (área no techada, entregada con piso cerámico y perímetro con paredes pintadas)."
     return R
 
 def generar_simulacion(cfg, dep, out, num, ape):
@@ -203,7 +205,7 @@ def main():
         ficha_remove.append("Dormitorios secundarios (02)"); ficha_extra["Dormitorio principal"]="Dormitorio"
     elif ndd==2:
         ficha_extra["Dormitorios secundarios (02)"]="Dormitorio secundario (01)"
-    if not dep.get("terraza_m2"): ficha_remove.append("Perímetro con paredes pintadas")
+    if not dep.get("terraza_m2"): ficha_remove.append("Perímetro con paredes pintadas"); ficha_remove.append("Área de terraza (no techada)")
     if not cfg.get("cochera"): ficha_remove.append("Reja corrediza de apertura manual")
     jobs=[]
     if "A" in cfg.get("opciones",["A","B"]): jobs.append(("TPL_Propuesta_OpcionA.docx",f"Propuesta_VIVA_PRO_Depa{num}_{ape}_OpcionA.docx",None))
