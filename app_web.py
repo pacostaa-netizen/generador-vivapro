@@ -28,8 +28,8 @@ st.title("🏢 Generador de Documentos — VIVA PRO")
 st.caption("LA HAUS CONSTRUCTORA S.A.C. · Llena los datos y descarga los PDFs del cliente.")
 
 st.subheader("Datos del cliente")
+nombre=st.text_input("Nombre completo (nombres y apellidos) *")
 c1,c2=st.columns(2)
-nombre=c1.text_input("Nombre completo *"); apellido=c2.text_input("Apellido (para Sr./Sra.) *")
 sexo=c1.selectbox("Sexo",["F","M"]); dni=c2.text_input("DNI *")
 estado_civil=c1.selectbox("Estado civil",["Soltero","Soltera","Casado","Casada","Conviviente"])
 domicilio=c2.text_input("Domicilio")
@@ -95,7 +95,7 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
         st.warning("Completa al menos Nombre, DNI y Departamento."); st.stop()
     if not incluir_hip and prop and abs(directo_pct-100)>0.5:
         st.warning("Sin hipotecario, el cronograma debe sumar 100%. Ajusta los %."); st.stop()
-    ape=(apellido or nombre.split()[0]).strip()
+    _p=nombre.split(); ape=(" ".join(_p[-2:]) if len(_p)>=3 else (_p[-1] if len(_p)==2 else nombre)).strip()
     with tempfile.TemporaryDirectory() as out:
         base=dict(carpeta_salida=out,nombre=nombre,apellido=ape,sexo=sexo,dni=dni,estado_civil=estado_civil,
             conyuge=conyuge or None,conyuge_dni=conyuge_dni,domicilio=domicilio,telefono=telefono,correo=correo,
