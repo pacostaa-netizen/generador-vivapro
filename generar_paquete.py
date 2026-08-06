@@ -23,6 +23,27 @@ def m0(x):  return f"{round(x):,.0f}"
 def pct(x): return f"{x:.2f} %"
 def palabras_soles(x): return num2words(int(round(x)), lang="es").upper() + " CON 00/100 SOLES"
 def fecha_larga(d): return f"{d.day} de {MESES[d.month-1]} de {d.year}"
+
+def _ec_sexo(ec, sexo):
+    if not ec: return ec
+    base={"soltero":("Soltero","Soltera"),"soltera":("Soltero","Soltera"),
+          "casado":("Casado","Casada"),"casada":("Casado","Casada"),
+          "viudo":("Viudo","Viuda"),"viuda":("Viudo","Viuda"),
+          "divorciado":("Divorciado","Divorciada"),"divorciada":("Divorciado","Divorciada")}
+    k=ec.strip().lower()
+    if k in base: return base[k][0] if sexo=="M" else base[k][1]
+    return ec
+
+def _nombre_completo(nombre, ape):
+    n=(nombre or "").strip(); a=(ape or "").strip()
+    if a and a.upper() not in n.upper(): n=(n+" "+a).strip()
+    return n
+
+def _cli_tag(nombre, ape):
+    cli=(nombre or "").split()[0] if (nombre or "").split() else "Cliente"
+    a=(ape or "").strip().replace(" ","")
+    return (cli+("_"+a if a else "")).replace(" ","")
+
 def mes_anio(d):    return f"{MESES[d.month-1]} {d.year}"
 
 def fit_canvas(src, cw=1536, ch=2752):
@@ -36,7 +57,15 @@ def fit_canvas(src, cw=1536, ch=2752):
     canvas.paste(im2, ((cw-nw)//2, (ch-nh)//2))
     buf = io.BytesIO(); canvas.save(buf, "JPEG", quality=90); return buf.getvalue()
 
-def render_docx(tpl_path, out_path, repl, media_swap=None):
+def _remove_tr(xml, marker):
+    """Elimina la fila <w:tr> de tabla que contiene el texto `marker`."""
+    i = xml.find(marker)
+    if i == -1: return xml
+    s = xml.rfind("<w:tr", 0, i); e = xml.find("</w:tr>", i)
+    if s == -1 or e == -1: return xml
+    return xml[:s] + xml[e+len("</w:tr>"):]
+
+def render_docx(tpl_path, out_path, repl, media_swap=None, remove_rows=None):
     shutil.copyfile(tpl_path, out_path)
     tmp = out_path + ".tmp"
     with zipfile.ZipFile(out_path,"r") as zin, zipfile.ZipFile(tmp,"w",zipfile.ZIP_DEFLATED) as zout:
@@ -46,6 +75,8 @@ def render_docx(tpl_path, out_path, repl, media_swap=None):
                 xml = data.decode("utf-8")
                 for old,new in sorted(repl.items(), key=lambda kv:-len(kv[0])):
                     xml = xml.replace(old,new)
+                for marker in (remove_rows or []):
+                    xml = _remove_tr(xml, marker)
                 data = xml.encode("utf-8")
             elif media_swap and item.filename in media_swap:
                 data = media_swap[item.filename]
@@ -63,10 +94,10 @@ def construir(cfg, dep):
     p20=P*0.20; p20_sep=p20-S; inicial40=P*0.40; armada=P*0.15; saldo60=P-inicial40; half50=P*0.50; p10=P*0.10
     d=datetime.date.fromisoformat(cfg["fecha"]); yyyy=d.year
     num=dep["codigo"]; piso=dep["piso"]; tip=dep["tipologia"]; area=dep["area_m2"]
-    dorm=dep["dormitorios_txt"]; banos=dep["banos_txt"]; un=cfg.get("unidad_n","")
+    dorm=dep["dormitorios_txt"]; banos=dep["banos_txt"]; un=cfg.get("unidad_n") or str(dep.get("ui",""))
     nd={"un (01) dormitorio":1,"dos (02) dormitorios":2,"tres (03) dormitorios":3}.get(dorm,3)
     nd_txt=f"{nd} dormitorio"+("s" if nd!=1 else "")
-    sexo=cfg.get("sexo","F").upper(); ape=cfg.get("apellido",""); nombre=cfg["nombre"].upper(); ec=cfg.get("estado_civil","")
+    sexo=cfg.get("sexo","F").upper(); ape=cfg.get("apellido",""); nombre=cfg["nombre"].upper(); ec=_ec_sexo(cfg.get("estado_civil",""),sexo)
     if sexo=="F": trato="Señora:"; estimado=f"Estimada Sra. {ape}"
     else:         trato="Señor:";  estimado=f"Estimado Sr. {ape}"
     R={
@@ -80,8 +111,8 @@ def construir(cfg, dep):
         "(junio 2026)":f"({mes_anio(d)})",
         "Departamento Nº 203 – Piso 2 – Tipología 3D-A":f"Departamento Nº {num} – {piso} – Tipología {tip}",
         "Departamento N.° 203, Piso 2.":f"Departamento N.° {num}, {piso}.",
-        "Departamento N° 203 (Unidad N° 05)":f"Departamento N° {num} (Unidad N° {un})",
-        "Departamento Nº 203 (Unidad Nº 05)":f"Departamento Nº {num} (Unidad Nº {un})",
+        "Departamento N° 203 (Unidad N° 05)":f"Departamento N° {num}"+(f" (Unidad N° {un})" if un else ""),
+        "Departamento Nº 203 (Unidad Nº 05)":f"Departamento Nº {num}"+(f" (Unidad Nº {un})" if un else ""),
         "Piso 2 — Tipología 3D-A — 76 m²":f"{piso} — Tipología {tip} — {area} m²",
         "Piso 2 — Tipología 3D-A.":f"{piso} — Tipología {tip}.",
         "76 m² (con tolerancia de variación de hasta 3% por tratarse de bien futuro).":f"{area} m² (con tolerancia de variación de hasta 3% por tratarse de bien futuro).",
@@ -100,7 +131,7 @@ def construir(cfg, dep):
     if coch:
         R["estacionamiento no incluido"]=f"estacionamiento N° {coch['est']} (16 m², con reja corrediza no elevadiza y partida registral independiente)"
         R["Departamento Nº 203 – Piso 2 – Tipología 3D-A"]=f"Departamento Nº {num} – {piso} – Tipología {tip} + Estac. N° {coch['est']}"
-        R["Cochera con piso de cemento pulido (no incluida en la presente unidad)."]=f"Estacionamiento N° {coch['est']} incluido: piso de cemento pulido, reja corrediza (no elevadiza), con partida registral independiente."
+        R["Estacionamiento con piso de cemento pulido (no incluido en la presente unidad)."]=f"Estacionamiento N° {coch['est']} incluido: piso de cemento pulido, reja corrediza (no elevadiza), con partida registral independiente."
     if cfg.get("conyuge"): R["No aplica – DNI No aplica"]=f"{cfg['conyuge']} – DNI {cfg.get('conyuge_dni','')}"
     if sexo=="M": R["la clienta"]="el cliente"
     return R
@@ -160,13 +191,30 @@ def main():
         pf=os.path.join(planos_dir,dep["plano"])
         if os.path.exists(pf):
             ficha_swap={"word/media/plano_distribucion.jpeg": fit_canvas(pf)}
+    # Ficha: ajustar el "cuadro de acabados por ambiente" a la tipologia real
+    ndd={"un (01) dormitorio":1,"dos (02) dormitorios":2,"tres (03) dormitorios":3}.get(dep["dormitorios_txt"],3)
+    nbb=1 if "un (01)" in dep["banos_txt"] else 2
+    ficha_extra={}; ficha_remove=[]
+    if nbb==1:
+        ficha_remove.append("Baño dormitorio"); ficha_extra["Baño principal"]="Baño"
+    else:
+        ficha_extra["Baño dormitorio"]="Baño secundario"
+    if ndd==1:
+        ficha_remove.append("Dormitorios secundarios (02)"); ficha_extra["Dormitorio principal"]="Dormitorio"
+    elif ndd==2:
+        ficha_extra["Dormitorios secundarios (02)"]="Dormitorio secundario (01)"
+    if not dep.get("terraza_m2"): ficha_remove.append("Perímetro con paredes pintadas")
+    if not cfg.get("cochera"): ficha_remove.append("Reja corrediza de apertura manual")
     jobs=[]
     if "A" in cfg.get("opciones",["A","B"]): jobs.append(("TPL_Propuesta_OpcionA.docx",f"Propuesta_VIVA_PRO_Depa{num}_{ape}_OpcionA.docx",None))
     if "B" in cfg.get("opciones",["A","B"]): jobs.append(("TPL_Propuesta_OpcionB.docx",f"Propuesta_VIVA_PRO_Depa{num}_{ape}_OpcionB.docx",None))
-    jobs.append(("TPL_Ficha_Tecnica.docx",f"Ficha_Tecnica_Depa{num}_VIVAPRO.docx",ficha_swap))
-    jobs.append(("TPL_Contrato_Separacion.docx",f"Contrato_Separacion_{ape}_Depa{num}.docx",None))
-    for tpl,name,swap in jobs:
-        dx=os.path.join(out,name); render_docx(os.path.join(TPL,tpl),dx,repl,swap); to_pdf(dx,out); print("OK",name)
+    jobs.append(("TPL_Ficha_Tecnica.docx",f"Ficha_Tecnica_Depa{num}_{_cli_tag(cfg['nombre'],cfg.get('apellido',''))}.docx",ficha_swap,ficha_extra,ficha_remove))
+    jobs.append(("TPL_Contrato_Separacion.docx",f"Contrato_Separacion_{_cli_tag(cfg['nombre'],ape)}_Depa{num}.docx",None))
+    for tpl,name,swap,*rest in jobs:
+        extra=rest[0] if len(rest)>0 else None
+        rrows=rest[1] if len(rest)>1 else None
+        rr=dict(repl,**extra) if extra else repl
+        dx=os.path.join(out,name); render_docx(os.path.join(TPL,tpl),dx,rr,swap,remove_rows=rrows); to_pdf(dx,out); print("OK",name)
     if cfg.get("incluir_simulacion",True):
         s=generar_simulacion(cfg,dep,out,num,ape)
         if s: print("OK",s)

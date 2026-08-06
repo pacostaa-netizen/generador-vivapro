@@ -43,7 +43,7 @@ dep=DEPTOS[cod]
 st.info(f"Tipología {dep['tipologia']} · {dep['area_m2']} m² · {dep['piso']} · BBP estimado S/ {dep.get('bbp') or 0:,}")
 c3,c4=st.columns(2)
 precio=c3.number_input("Precio negociado depto (S/)",value=int(dep.get("precio_lista_soles") or dep.get("precio_final_soles") or 0),step=1000)
-unidad_n=c4.text_input("N° unidad registral")
+unidad_n=c4.text_input("N° unidad registral (Unidad Inmobiliaria)",value=str(dep.get("ui","")))
 fecha=c3.date_input("Fecha",value=datetime.date.today()); n_sep=c4.text_input("N° separación",value="001")
 
 st.subheader("Cochera (opcional)")
@@ -160,7 +160,7 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
             buf=io.BytesIO()
             with zipfile.ZipFile(buf,"w",zipfile.ZIP_DEFLATED) as z:
                 for f in sorted(pdfs): z.write(os.path.join(out,f),f)
-            st.download_button("⬇️ Descargar todo (ZIP)",buf.getvalue(),file_name=f"Documentos_{ape}_{cod}.zip",
+            st.download_button("⬇️ Descargar todo (ZIP)",buf.getvalue(),file_name=f"Documentos_{(nombre.split()[0] if nombre.split() else 'Cliente')}_{ape}_{cod}.zip",
                 mime="application/zip",use_container_width=True)
             for f in sorted(pdfs):
                 st.download_button("⬇️ "+f,open(os.path.join(out,f),"rb").read(),file_name=f,mime="application/pdf")

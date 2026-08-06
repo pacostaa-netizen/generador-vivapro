@@ -5,11 +5,12 @@
   "tipologia": "2D",
   "area_m2": 52,
   "dormitorios_txt": "dos (02) dormitorios",
-  "banos_txt": "un (01) baño",
-  "precio_final_soles": 231000,
-  "precio_lista_soles": 238000,
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 245000,
+  "precio_lista_soles": 245000,
   "bbp": 21200,
-  "plano": "2D-52m2.jpg"
+  "plano": "2D- 52m2.jpg",
+  "ui": 6
  },
  "302": {
   "codigo": "302",
@@ -17,11 +18,12 @@
   "tipologia": "2D",
   "area_m2": 52,
   "dormitorios_txt": "dos (02) dormitorios",
-  "banos_txt": "un (01) baño",
-  "precio_final_soles": 227500,
-  "precio_lista_soles": 234500,
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 241500,
+  "precio_lista_soles": 241500,
   "bbp": 21200,
-  "plano": "2D-52m2.jpg"
+  "plano": "2D- 52m2.jpg",
+  "ui": 9
  },
  "402": {
   "codigo": "402",
@@ -29,11 +31,12 @@
   "tipologia": "2D",
   "area_m2": 52,
   "dormitorios_txt": "dos (02) dormitorios",
-  "banos_txt": "un (01) baño",
-  "precio_final_soles": 224000,
-  "precio_lista_soles": 231000,
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 238000,
+  "precio_lista_soles": 238000,
   "bbp": 21200,
-  "plano": "2D-52m2.jpg"
+  "plano": "2D- 52m2.jpg",
+  "ui": 12
  },
  "502": {
   "codigo": "502",
@@ -41,11 +44,12 @@
   "tipologia": "2D",
   "area_m2": 52,
   "dormitorios_txt": "dos (02) dormitorios",
-  "banos_txt": "un (01) baño",
-  "precio_final_soles": 220500,
-  "precio_lista_soles": 227500,
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 234500,
+  "precio_lista_soles": 234500,
   "bbp": 21200,
-  "plano": "2D-52m2.jpg"
+  "plano": "2D- 52m2.jpg",
+  "ui": 15
  },
  "602": {
   "codigo": "602",
@@ -53,11 +57,12 @@
   "tipologia": "2D",
   "area_m2": 52,
   "dormitorios_txt": "dos (02) dormitorios",
-  "banos_txt": "un (01) baño",
-  "precio_final_soles": 217000,
-  "precio_lista_soles": 224000,
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 231000,
+  "precio_lista_soles": 231000,
   "bbp": 21200,
-  "plano": "2D-52m2.jpg"
+  "plano": "2D- 52m2.jpg",
+  "ui": 18
  },
  "702": {
   "codigo": "702",
@@ -65,11 +70,12 @@
   "tipologia": "2D",
   "area_m2": 52,
   "dormitorios_txt": "dos (02) dormitorios",
-  "banos_txt": "un (01) baño",
-  "precio_final_soles": 213500,
-  "precio_lista_soles": 220500,
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 227500,
+  "precio_lista_soles": 227500,
   "bbp": 21200,
-  "plano": "2D-52m2.jpg"
+  "plano": "2D- 52m2.jpg",
+  "ui": 21
  },
  "802": {
   "codigo": "802",
@@ -77,11 +83,12 @@
   "tipologia": "2D",
   "area_m2": 52,
   "dormitorios_txt": "dos (02) dormitorios",
-  "banos_txt": "un (01) baño",
-  "precio_final_soles": 210000,
-  "precio_lista_soles": 217000,
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 224000,
+  "precio_lista_soles": 224000,
   "bbp": 21200,
-  "plano": "2D-52m2.jpg"
+  "plano": "2D- 52m2.jpg",
+  "ui": 24
  },
  "902": {
   "codigo": "902",
@@ -89,11 +96,13 @@
   "tipologia": "2D",
   "area_m2": 52,
   "dormitorios_txt": "dos (02) dormitorios",
-  "banos_txt": "un (01) baño",
-  "precio_final_soles": 206500,
-  "precio_lista_soles": 213500,
-  "bbp": 21200,
-  "plano": "2D-52m2.jpg"
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 259000,
+  "precio_lista_soles": 259000,
+  "bbp": 7900,
+  "plano": "902.jpg",
+  "terraza_m2": 33,
+  "ui": 27
  },
  "201": {
   "codigo": "201",
@@ -102,10 +111,11 @@
   "area_m2": 74,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 301000,
-  "precio_lista_soles": 308000,
+  "precio_final_soles": 322000,
+  "precio_lista_soles": 322000,
   "bbp": 7900,
-  "plano": "3DA_74m2.jpg"
+  "plano": "3DA_74m2.jpg",
+  "ui": 5
  },
  "301": {
   "codigo": "301",
@@ -114,10 +124,11 @@
   "area_m2": 74,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 297500,
-  "precio_lista_soles": 304500,
+  "precio_final_soles": 315000,
+  "precio_lista_soles": 315000,
   "bbp": 7900,
-  "plano": "3DA_74m2.jpg"
+  "plano": "3DA_74m2.jpg",
+  "ui": 8
  },
  "401": {
   "codigo": "401",
@@ -126,10 +137,11 @@
   "area_m2": 74,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 294000,
-  "precio_lista_soles": 301000,
+  "precio_final_soles": 311500,
+  "precio_lista_soles": 311500,
   "bbp": 7900,
-  "plano": "3DA_74m2.jpg"
+  "plano": "3DA_74m2.jpg",
+  "ui": 11
  },
  "501": {
   "codigo": "501",
@@ -138,10 +150,11 @@
   "area_m2": 74,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 290500,
-  "precio_lista_soles": 297500,
+  "precio_final_soles": 308000,
+  "precio_lista_soles": 308000,
   "bbp": 7900,
-  "plano": "3DA_74m2.jpg"
+  "plano": "3DA_74m2.jpg",
+  "ui": 14
  },
  "601": {
   "codigo": "601",
@@ -150,10 +163,11 @@
   "area_m2": 74,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 287000,
-  "precio_lista_soles": 294000,
+  "precio_final_soles": 304500,
+  "precio_lista_soles": 304500,
   "bbp": 7900,
-  "plano": "3DA_74m2.jpg"
+  "plano": "3DA_74m2.jpg",
+  "ui": 17
  },
  "701": {
   "codigo": "701",
@@ -162,10 +176,38 @@
   "area_m2": 74,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 283500,
-  "precio_lista_soles": 290500,
+  "precio_final_soles": 301000,
+  "precio_lista_soles": 301000,
   "bbp": 7900,
-  "plano": "3DA_74m2.jpg"
+  "plano": "3DA_74m2.jpg",
+  "ui": 20
+ },
+ "801": {
+  "codigo": "801",
+  "piso": "Piso 8",
+  "tipologia": "3D-B",
+  "area_m2": 74,
+  "dormitorios_txt": "tres (03) dormitorios",
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 297500,
+  "precio_lista_soles": 297500,
+  "bbp": 7900,
+  "plano": "3DA_74m2.jpg",
+  "ui": 23
+ },
+ "901": {
+  "codigo": "901",
+  "piso": "Piso 9",
+  "tipologia": "3D-B",
+  "area_m2": 74,
+  "dormitorios_txt": "tres (03) dormitorios",
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 346500,
+  "precio_lista_soles": 346500,
+  "bbp": 7900,
+  "plano": "901.jpg",
+  "terraza_m2": 57,
+  "ui": 26
  },
  "203": {
   "codigo": "203",
@@ -174,10 +216,11 @@
   "area_m2": 76,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 318500,
-  "precio_lista_soles": 325500,
+  "precio_final_soles": 339500,
+  "precio_lista_soles": 339500,
   "bbp": 7900,
-  "plano": "3DB-76m2.jpeg"
+  "plano": "3DB-76m2.jpeg",
+  "ui": 7
  },
  "303": {
   "codigo": "303",
@@ -186,10 +229,11 @@
   "area_m2": 76,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 315000,
-  "precio_lista_soles": 322000,
+  "precio_final_soles": 336000,
+  "precio_lista_soles": 336000,
   "bbp": 7900,
-  "plano": "3DB-76m2.jpeg"
+  "plano": "3DB-76m2.jpeg",
+  "ui": 10
  },
  "403": {
   "codigo": "403",
@@ -198,10 +242,11 @@
   "area_m2": 76,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 311500,
-  "precio_lista_soles": 318500,
+  "precio_final_soles": 332500,
+  "precio_lista_soles": 332500,
   "bbp": 7900,
-  "plano": "3DB-76m2.jpeg"
+  "plano": "3DB-76m2.jpeg",
+  "ui": 13
  },
  "503": {
   "codigo": "503",
@@ -210,10 +255,11 @@
   "area_m2": 76,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 308000,
-  "precio_lista_soles": 315000,
+  "precio_final_soles": 329000,
+  "precio_lista_soles": 329000,
   "bbp": 7900,
-  "plano": "3DB-76m2.jpeg"
+  "plano": "3DB-76m2.jpeg",
+  "ui": 16
  },
  "603": {
   "codigo": "603",
@@ -222,10 +268,11 @@
   "area_m2": 76,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 304500,
-  "precio_lista_soles": 311500,
+  "precio_final_soles": 325500,
+  "precio_lista_soles": 325500,
   "bbp": 7900,
-  "plano": "3DB-76m2.jpeg"
+  "plano": "3DB-76m2.jpeg",
+  "ui": 19
  },
  "703": {
   "codigo": "703",
@@ -234,46 +281,78 @@
   "area_m2": 76,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 301000,
-  "precio_lista_soles": 308000,
+  "precio_final_soles": 322000,
+  "precio_lista_soles": 322000,
   "bbp": 7900,
-  "plano": "3DB-76m2.jpeg"
+  "plano": "3DB-76m2.jpeg",
+  "ui": 22
  },
- "S003": {
-  "codigo": "S003",
+ "803": {
+  "codigo": "803",
+  "piso": "Piso 8",
+  "tipologia": "3D-A",
+  "area_m2": 76,
+  "dormitorios_txt": "tres (03) dormitorios",
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 318500,
+  "precio_lista_soles": 318500,
+  "bbp": 7900,
+  "plano": "3DB-76m2.jpeg",
+  "ui": 25
+ },
+ "903": {
+  "codigo": "903",
+  "piso": "Piso 9",
+  "tipologia": "3D-A",
+  "area_m2": 76,
+  "dormitorios_txt": "tres (03) dormitorios",
+  "banos_txt": "dos (02) baños",
+  "precio_final_soles": 346500,
+  "precio_lista_soles": 346500,
+  "bbp": 7900,
+  "plano": "903.jpg",
+  "terraza_m2": 27,
+  "ui": 28
+ },
+ "S01": {
+  "codigo": "S01",
   "piso": "Semisótano",
   "tipologia": "1D + T",
-  "area_m2": 43,
+  "area_m2": 36,
   "dormitorios_txt": "un (01) dormitorio",
   "banos_txt": "un (01) baño",
-  "precio_final_soles": 154000,
-  "precio_lista_soles": 161000,
+  "precio_final_soles": 168000,
+  "precio_lista_soles": 168000,
   "bbp": 21200,
-  "plano": "S1D_+_T_43m2.jpg"
+  "plano": "S1D_+_T_43m2.jpg",
+  "terraza_m2": 5,
+  "ui": 1
  },
- "S002": {
-  "codigo": "S002",
+ "S03": {
+  "codigo": "S03",
   "piso": "Semisótano",
   "tipologia": "1D",
-  "area_m2": 32,
+  "area_m2": 31,
   "dormitorios_txt": "un (01) dormitorio",
   "banos_txt": "un (01) baño",
-  "precio_final_soles": 136500,
-  "precio_lista_soles": 143500,
+  "precio_final_soles": 147000,
+  "precio_lista_soles": 147000,
   "bbp": 23200,
-  "plano": "S1D_32m2.jpg"
+  "plano": "S1D_32m2.jpg",
+  "ui": 2
  },
  "101": {
   "codigo": "101",
   "piso": "Piso 1",
-  "tipologia": "3D + 1B",
+  "tipologia": "3D",
   "area_m2": 71,
   "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 297500,
-  "precio_lista_soles": 304500,
+  "precio_final_soles": 315000,
+  "precio_lista_soles": 315000,
   "bbp": 7900,
-  "plano": "101_3D.jpg"
+  "plano": "101_3D.jpg",
+  "ui": 3
  },
  "103": {
   "codigo": "103",
@@ -281,46 +360,11 @@
   "tipologia": "2D",
   "area_m2": 54,
   "dormitorios_txt": "dos (02) dormitorios",
-  "banos_txt": "un (01) baño",
-  "precio_final_soles": 238000,
-  "precio_lista_soles": 245000,
-  "bbp": 21200,
-  "plano": "2D_103.jpg"
- },
- "803D": {
-  "codigo": "803D",
-  "piso": "Pisos 8–9 (dúplex)",
-  "tipologia": "DPX B",
-  "area_m2": 112,
-  "dormitorios_txt": "tres (03) dormitorios",
   "banos_txt": "dos (02) baños",
-  "precio_final_soles": 409500,
-  "precio_lista_soles": 416500,
-  "bbp": 0,
-  "plano": "DPX803.jpg"
- },
- "801D": {
-  "codigo": "801D",
-  "piso": "Pisos 8–9 (dúplex)",
-  "tipologia": "DPX A",
-  "area_m2": 108,
-  "dormitorios_txt": "tres (03) dormitorios",
-  "banos_txt": "dos (02) baños",
-  "precio_final_soles": 388500,
-  "precio_lista_soles": 395500,
-  "bbp": 0,
-  "plano": "DPX801.jpg"
- },
- "903": {
-  "codigo": "903",
-  "piso": "Piso 9",
-  "tipologia": "1D",
-  "area_m2": 38,
-  "dormitorios_txt": "un (01) dormitorio",
-  "banos_txt": "un (01) baño",
-  "precio_final_soles": 150500,
-  "precio_lista_soles": 157500,
-  "bbp": 21200,
-  "plano": "1D_903.jpg"
+  "precio_final_soles": 252000,
+  "precio_lista_soles": 252000,
+  "bbp": 7900,
+  "plano": "103_2D.jpg",
+  "ui": 4
  }
 }

@@ -38,7 +38,7 @@ def header_footer(canvas, doc, first):
     # footer dark bar
     canvas.setFillColor(DARK); canvas.rect(0,0,PW,26,fill=1,stroke=0)
     canvas.setFillColor(colors.white); canvas.setFont("Helvetica-Bold",7.5)
-    canvas.drawString(MX,9,"JR PERSEVERANCIA 7907, URB PRO - LOS OLIVOS")
+    canvas.drawString(MX,9,"FRAY ANGÉLICO 429 - SAN BORJA")
     canvas.drawRightString(PW-MX,9,"@lahausperu")
     if first:
         lh=os.path.join(TPL,"logo_lahaus.png"); vp=os.path.join(TPL,"logo_vivapro.png")
@@ -92,9 +92,9 @@ def build(cfg):
     notab=ParagraphStyle("nb",fontName="Helvetica-Bold",fontSize=8,leading=12)
     ncell=[Paragraph("Nota:",notab),
            Paragraph("• Los precios están sujetos a cambios.",nota),
-           Paragraph("• Validez de la proforma: 7 días.",nota),
+           Paragraph("• Validez de la proforma: 5 días.",nota),
            Paragraph("• La separación forma parte de la cuota inicial.",nota),
-           Paragraph("• El área del departamento puede variar hasta un 5%.",nota)]
+           Paragraph("• El área del departamento puede variar hasta un 3%.",nota)]
     nt=Table([[ncell]],colWidths=[W])
     nt.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,-1),GRAY),("BOX",(0,0),(-1,-1),0.6,BORDER),
         ("LEFTPADDING",(0,0),(-1,-1),8),("TOPPADDING",(0,0),(-1,-1),6),("BOTTOMPADDING",(0,0),(-1,-1),6)]))
@@ -108,7 +108,7 @@ def build(cfg):
         if os.path.exists(pf):
             w,h=img_dims(pf); maxw=W*0.62; maxh=PH-200
             sc=min(maxw/w,maxh/h); elems.append(RLImage(pf,width=w*sc,height=h*sc))
-    name=f"Proforma_{cfg.get('apellido','Cliente').replace(' ','')}_{cod}_VIVAPRO.pdf"
+    name=f"Proforma_{( (cfg.get('nombre') or '').split()[0] if (cfg.get('nombre') or '').split() else 'Cliente')}_{cfg.get('apellido','Cliente').replace(' ','')}_{cod}_VIVAPRO.pdf"
     path=os.path.join(out,name)
     doc=SimpleDocTemplate(path,pagesize=A4,leftMargin=MX,rightMargin=MX,topMargin=70,bottomMargin=36)
     frame=Frame(MX,36,PW-2*MX,PH-70-36,id='n')

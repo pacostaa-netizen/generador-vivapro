@@ -16,7 +16,15 @@ def pc(x): return f"{x:.2f} %"
 def monto_de(r,P): return float(r["monto"]) if r.get("monto") not in (None,"") else P*float(r["pct"])/100
 
 def build_table(rows,precio,hipotecario=None):
-    P=float(precio); out=[]
+    P=float(precio); Pr=round(P); out=[]
+    # montos redondeados a soles; una fila absorbe el residual para que TODO cuadre exacto
+    m_rows=[round(monto_de(r,P)) for r in rows]
+    if not hipotecario and m_rows:
+        idx=next((i for i,r in enumerate(rows) if r.get("residual")),None)
+        if idx is None:
+            idx=next((i for i,r in enumerate(rows) if ("firma" in r["concepto"].lower() and "separ" not in r["concepto"].lower())),None)
+        if idx is None: idx=len(m_rows)-1
+        m_rows[idx]+=Pr-sum(m_rows)
     hdr=[_cell(W["n"],"#",fill="EA5A29",bold=True,white=True,jc="center",sz="18"),
          _cell(W["con"],"Concepto",fill="EA5A29",bold=True,white=True,sz="18"),
          _cell(W["fec"],"Fecha de pago",fill="EA5A29",bold=True,white=True,sz="18"),
@@ -24,8 +32,8 @@ def build_table(rows,precio,hipotecario=None):
          _cell(W["pct"],"% precio",fill="EA5A29",bold=True,white=True,jc="right",sz="18")]
     out.append('<w:tr><w:trPr><w:tblHeader/></w:trPr>'+''.join(hdr)+'</w:tr>')
     directo=0.0; i=0
-    for r in rows:
-        i+=1; mt=monto_de(r,P); directo+=mt
+    for r,mt in zip(rows,m_rows):
+        i+=1; directo+=mt
         out.append(_row([_cell(W["n"],str(i),jc="center"),
             _cell(W["con"],r["concepto"],bold=True,sub2=r.get("sub2")),
             _cell(W["fec"],r.get("fecha","")),
@@ -37,7 +45,7 @@ def build_table(rows,precio,hipotecario=None):
             _cell(W["fec"],"Durante la construcción.",fill="FFF4EE"),
             _cell(W["mon"],m2(directo),fill="FFF4EE",bold=True,jc="right"),
             _cell(W["pct"],pc(directo/P*100),fill="FFF4EE",bold=True,jc="right")]))
-        i+=1; hm=P-directo
+        i+=1; hm=Pr-directo
         out.append(_row([_cell(W["n"],str(i),jc="center"),
             _cell(W["con"],hipotecario["concepto"],bold=True,sub2=hipotecario.get("sub2")),
             _cell(W["fec"],hipotecario.get("fecha","")),
@@ -46,7 +54,7 @@ def build_table(rows,precio,hipotecario=None):
     out.append(_row([_cell(W["n"],"$",fill="000000",bold=True,white=True,jc="center"),
         _cell(W["con"],"PRECIO TOTAL DEL INMUEBLE",fill="000000",bold=True,white=True),
         _cell(W["fec"],"Total.",fill="000000",white=True),
-        _cell(W["mon"],m2(P),fill="000000",bold=True,white=True,jc="right"),
+        _cell(W["mon"],m2(Pr),fill="000000",bold=True,white=True,jc="right"),
         _cell(W["pct"],"100.00 %",fill="000000",bold=True,white=True,jc="right")]))
     g='<w:tblPr><w:tblW w:w="9072" w:type="dxa"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="CCCCCC"/><w:left w:val="single" w:sz="4" w:color="CCCCCC"/><w:bottom w:val="single" w:sz="4" w:color="CCCCCC"/><w:right w:val="single" w:sz="4" w:color="CCCCCC"/><w:insideH w:val="single" w:sz="4" w:color="CCCCCC"/><w:insideV w:val="single" w:sz="4" w:color="CCCCCC"/></w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="700"/><w:gridCol w:w="3300"/><w:gridCol w:w="2372"/><w:gridCol w:w="1500"/><w:gridCol w:w="1200"/></w:tblGrid>'
     return '<w:tbl>'+g+''.join(out)+'</w:tbl>'

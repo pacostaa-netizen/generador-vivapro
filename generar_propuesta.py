@@ -9,6 +9,27 @@ if not os.path.exists(os.path.join(TPL,"deptos.json")): TPL=BASE
 MES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]
 def flarga(d): return f"{d.day} de {MES[d.month-1]} de {d.year}"
 
+def _ec_sexo(ec, sexo):
+    if not ec: return ec
+    base={"soltero":("Soltero","Soltera"),"soltera":("Soltero","Soltera"),
+          "casado":("Casado","Casada"),"casada":("Casado","Casada"),
+          "viudo":("Viudo","Viuda"),"viuda":("Viudo","Viuda"),
+          "divorciado":("Divorciado","Divorciada"),"divorciada":("Divorciado","Divorciada")}
+    k=ec.strip().lower()
+    if k in base: return base[k][0] if sexo=="M" else base[k][1]
+    return ec
+
+def _nombre_completo(nombre, ape):
+    n=(nombre or "").strip(); a=(ape or "").strip()
+    if a and a.upper() not in n.upper(): n=(n+" "+a).strip()
+    return n
+
+def _cli_tag(nombre, ape):
+    cli=(nombre or "").split()[0] if (nombre or "").split() else "Cliente"
+    a=(ape or "").strip().replace(" ","")
+    return (cli+("_"+a if a else "")).replace(" ","")
+
+
 def _findsoffice():
     import shutil as sh
     for c in ("libreoffice","soffice","soffice.exe"):
@@ -27,6 +48,7 @@ def build_propuesta(cfg):
     d=datetime.date.fromisoformat(cfg["fecha"]); num=dep["codigo"]; piso=dep["piso"]; tip=dep["tipologia"]; area=dep["area_m2"]
     nd={"un (01) dormitorio":1,"dos (02) dormitorios":2,"tres (03) dormitorios":3}.get(dep["dormitorios_txt"],3)
     sexo=cfg.get("sexo","F").upper(); ape=cfg.get("apellido",""); ec=cfg.get("estado_civil","")
+    ec=_ec_sexo(ec,sexo); nomfull=_nombre_completo(cfg["nombre"],ape)
     trato="Señora:" if sexo=="F" else "Señor:"; estim=(f"Estimada Sra. {ape}" if sexo=="F" else f"Estimado Sr. {ape}")
     narm=sum(1 for r in rows if "Armada" in r["concepto"])
     # textos dinámicos
@@ -42,7 +64,7 @@ def build_propuesta(cfg):
         head="PLAN PERSONALIZADO (FINANCIAMIENTO DIRECTO)"
     table=C.build_table(rows,P,hip)
     out=cfg["carpeta_salida"]; os.makedirs(out,exist_ok=True)
-    name=f"Propuesta_VIVA_PRO_Depa{num}_{ape.replace(' ','')}_Personalizada.docx"
+    name=f"Propuesta_VIVA_PRO_Depa{num}_{_cli_tag(cfg['nombre'],ape)}_Personalizada.docx"
     outdocx=os.path.join(out,name)
     tpl_file="TPL_Propuesta_OpcionB.docx" if hip else "TPL_Propuesta_OpcionA.docx"
     shutil.copyfile(os.path.join(TPL,tpl_file),outdocx)
@@ -55,7 +77,7 @@ def build_propuesta(cfg):
                 xml=data.decode("utf-8")
                 tbls=[(m.start(),m.end()) for m in re.finditer(r'<w:tbl>.*?</w:tbl>',xml,re.S)]
                 s,e=tbls[1]; xml=xml[:s]+table+xml[e:]
-                R={"YADIRA LISSET CABALLERO NOEL":cfg["nombre"].upper(),
+                R={"YADIRA LISSET CABALLERO NOEL":nomfull.upper(),
                    "DNI: 44578531 — Estado civil: Soltera":f"DNI: {cfg['dni']} — Estado civil: {ec}",
                    "Señora:":trato,"Estimada Sra. Caballero":estim,
                    "Lima, 11 de junio de 2026":f"Lima, {flarga(d)}",
