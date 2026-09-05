@@ -62,7 +62,25 @@ def build_propuesta(cfg):
         introtxt=f"el precio se cancela íntegramente a LA HAUS ({directo:.0f}% directo), sin intervención bancaria."
         secbody="El precio de venta se cancela directamente a LA HAUS, sin intervención bancaria, conforme al siguiente cronograma:"
         head="PLAN PERSONALIZADO (FINANCIAMIENTO DIRECTO)"
-    table=C.build_table(rows,P,hip)
+    tc=float(cfg.get("tc") or 3.5); saldo_usd=bool(cfg.get("saldo_usd",False))
+    moneda=cfg.get("moneda","PEN")
+    usd=P/tc
+    if moneda=="USD":
+        precio_dual=f"US$ {P:,.2f}"
+        lbl31="Precio congelado:"
+        body31=f"el precio de US$ {P:,.2f} se mantiene fijo durante toda la vigencia del Contrato de Compraventa de Bien Futuro."
+    elif saldo_usd:
+        precio_dual=f"US$ {usd:,.2f}  /  S/ {P:,.2f}"
+        lbl31="Moneda de pago:"
+        body31=(f"los pagos hasta la firma en notaría se cancelan en soles a un tipo de cambio fijo de S/ {tc:.2f} "
+                f"por dólar; los pagos posteriores (armadas y saldo final) se expresan en dólares y se cancelan en "
+                f"soles al tipo de cambio venta SBS del día de pago, el cual en ningún caso será menor a S/ {tc:.2f} "
+                f"por dólar.")
+    else:
+        precio_dual=f"US$ {usd:,.2f}  /  S/ {P:,.2f}"
+        lbl31="Precio congelado:"
+        body31=f"el precio de S/ {P:,.2f} se mantiene fijo durante toda la vigencia del Contrato de Compraventa de Bien Futuro."
+    table=C.build_table(rows,P,hip,tc=cfg.get("tc"),saldo_usd=cfg.get("saldo_usd",False),moneda=moneda)
     out=cfg["carpeta_salida"]; os.makedirs(out,exist_ok=True)
     name=f"Propuesta_VIVA_PRO_Depa{num}_{_cli_tag(cfg['nombre'],ape)}_Personalizada.docx"
     outdocx=os.path.join(out,name)
@@ -71,13 +89,17 @@ def build_propuesta(cfg):
     tmp=outdocx+".tmp"
     import re
     with zipfile.ZipFile(outdocx) as zin, zipfile.ZipFile(tmp,"w",zipfile.ZIP_DEFLATED) as zout:
+        _seen=set()
         for it in zin.infolist():
+            if it.filename in _seen: continue
+            _seen.add(it.filename)
             data=zin.read(it.filename)
             if it.filename=="word/document.xml":
                 xml=data.decode("utf-8")
                 tbls=[(m.start(),m.end()) for m in re.finditer(r'<w:tbl>.*?</w:tbl>',xml,re.S)]
                 s,e=tbls[1]; xml=xml[:s]+table+xml[e:]
-                R={"YADIRA LISSET CABALLERO NOEL":nomfull.upper(),
+                R={"@@PRECIO_DUAL@@":precio_dual,"@@LBL31@@":lbl31,"@@BODY31@@":body31,
+                   "YADIRA LISSET CABALLERO NOEL":nomfull.upper(),
                    "DNI: 44578531 — Estado civil: Soltera":f"DNI: {cfg['dni']} — Estado civil: {ec}",
                    "Señora:":trato,"Estimada Sra. Caballero":estim,
                    "Lima, 11 de junio de 2026":f"Lima, {flarga(d)}",
