@@ -81,10 +81,9 @@ plant=colp1.selectbox("Plantilla de pago",PLANTILLAS)
 incluir_hip=colp2.checkbox("Incluye hipotecario",value=("hipotecario" in plant))
 ctc,cusd=st.columns([1,2])
 tc=ctc.number_input("Tipo de cambio referencial (S/ por US$)",value=3.50,step=0.01,format="%.2f")
-saldo_usd=cusd.checkbox("Saldo final en dólares (al T.C. del día, piso S/ 3.50)",value=True,
-    help="El aporte directo queda fijo en soles a este T.C.; el saldo final (dic-2027) se expresa en dólares y se paga al T.C. venta SBS del día, no menor a S/ 3.50.")
-moneda_usd=st.checkbox("Compra íntegra en dólares (US$) — obviar el tipo de cambio",value=False,
-    help="Toda la operación en dólares: precios y cronograma en US$, sin conversión ni nota cambiaria. El precio ingresado se toma como US$.")
+cusd.caption("En la propuesta, todos los montos se muestran en **US$** y su equivalente en **S/** a este tipo de cambio, más la nota de tipo de cambio.")
+moneda_usd=st.checkbox("Compra íntegra en dólares (US$) — mostrar solo US$",value=False,
+    help="Toda la operación en dólares: precios y cronograma solo en US$, sin soles ni nota cambiaria. El precio ingresado se toma como US$.")
 moneda="USD" if moneda_usd else "PEN"
 if st.session_state.get("_plant")!=plant or st.session_state.get("_precio")!=precio_basis:
     rows0,_=C.plantilla(plant,precio_basis)
@@ -102,11 +101,11 @@ else:
 
 st.subheader("¿Qué generar?")
 g1,g2=st.columns(2)
-prop=g1.checkbox("Propuesta (cronograma de arriba)",value=True); sim=g2.checkbox("Simulación de crédito",value=True)
-fic=g1.checkbox("Ficha Técnica",value=True); con=g2.checkbox("Contrato de Separación",value=True)
+prop=g1.checkbox("Propuesta económica (cronograma de arriba)",value=True)
+fic=g2.checkbox("Ficha Técnica",value=True)
 cbf=g1.checkbox("Contrato de Bien Futuro",value=False,help="Contrato estándar (comprador directo). El caso con poder/representación se hace aparte.")
 entrega_str=g2.text_input("Fecha de entrega (contrato)",value="30 de noviembre de 2027")
-prof=False  # Proforma consolidada en la Propuesta (ya no se genera por separado)
+sim=False; con=False; prof=False  # Simulación y Contrato de Separación retirados; proforma va dentro de la Propuesta
 
 if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"):
     if not nombre or not dni or not cod:
@@ -118,7 +117,7 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
         base=dict(carpeta_salida=out,nombre=nombre,apellido=ape,sexo=sexo,dni=dni,estado_civil=estado_civil,
             conyuge=conyuge or None,conyuge_dni=conyuge_dni,domicilio=domicilio,telefono=telefono,correo=correo,
             codigo_depto=cod,unidad_n=unidad_n,precio_soles=int(precio),separacion_soles=3500,separacion_usd=1000,
-            fecha=fecha.isoformat(),n_sep=n_sep,planos_dir=PLANOS,tc=float(tc),saldo_usd=bool(saldo_usd),moneda=moneda)
+            fecha=fecha.isoformat(),n_sep=n_sep,planos_dir=PLANOS,tc=float(tc),moneda=moneda)
         if cochera: base["cochera"]=cochera
         errs=[]
         with st.spinner("Generando documentos..."):
@@ -145,17 +144,17 @@ if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"
             if cbf:
                 try: GC.build_contrato(dict(base,cronograma=rows,hipotecario=hip,entrega_str=entrega_str))
                 except Exception as ex: errs.append("Contrato Bien Futuro: "+str(ex))
-            if sim or fic or con:
-                cfg=dict(base,opciones=[],incluir_simulacion=sim,plazo_anios=20,tipo_cuota="Simple",
+            if fic:
+                _before=set(os.listdir(out))
+                cfg=dict(base,opciones=[],incluir_simulacion=False,plazo_anios=20,tipo_cuota="Simple",
                          tea_mivivienda=0.09,tea_tradicional=0.09,inicial_pct=inicial_pct)
                 ok,log=run_engine("generar_paquete.py",cfg)
-                if not ok: errs.append("Paquete: "+log)
-                if not fic:
-                    for f in list(os.listdir(out)):
-                        if f.startswith("Ficha_"): os.remove(os.path.join(out,f))
-                if not con:
-                    for f in list(os.listdir(out)):
-                        if f.startswith("Contrato_"): os.remove(os.path.join(out,f))
+                if not ok: errs.append("Ficha: "+log)
+                # de todo lo que genera el paquete, conservar solo la Ficha Técnica
+                for f in list(os.listdir(out)):
+                    if f not in _before and not f.startswith("Ficha_"):
+                        try: os.remove(os.path.join(out,f))
+                        except Exception: pass
             if prof:
                 forma_lbl=plant if not str(plant).startswith("Personalizada") else "Plan personalizado"
                 grand=int(precio)+(int(coch_precio) if cochera else 0)

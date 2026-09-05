@@ -48,11 +48,13 @@ def _es_fila_soles(concepto):
     c=(concepto or "").lower()
     return ("separ" in c) or ("firma" in c)
 
-def build_table(rows,precio,hipotecario=None,tc=None,saldo_usd=False,moneda='PEN'):
+def build_table(rows,precio,hipotecario=None,tc=None,moneda='PEN'):
     P=float(precio); Pr=round(P); out=[]
-    if moneda=='USD': saldo_usd=False   # compra íntegra en dólares: sin dual, sin nota cambiaria
-    dual = bool(saldo_usd and tc and float(tc)>0)
-    TC = float(tc) if dual else None
+    # no mostrar filas en 0 (p. ej. armadas vacías); la separación siempre se conserva
+    rows=[r for r in rows if (round(monto_de(r,P))>0 or "separ" in (r.get("concepto","") or "").lower())]
+    # PEN: cada monto se muestra en US$ y su equivalente en S/ (referencial al tc). USD: solo US$.
+    dual = (moneda!='USD')
+    TC = float(tc) if (tc and float(tc)>0) else 3.5
     # montos redondeados a soles; una fila absorbe el residual para que TODO cuadre exacto
     m_rows=[round(monto_de(r,P)) for r in rows]
     # --- fix "S/ 4": si hay hipotecario pero su monto es residual (directo ~100%), tratar como sin hipotecario ---
@@ -66,7 +68,7 @@ def build_table(rows,precio,hipotecario=None,tc=None,saldo_usd=False,moneda='PEN
             idx=next((i for i,r in enumerate(rows) if ("firma" in r["concepto"].lower() and "separ" not in r["concepto"].lower())),None)
         if idx is None: idx=len(m_rows)-1
         m_rows[idx]+=Pr-sum(m_rows)
-    mon_label = "Monto (US$)" if moneda=='USD' else ("Monto" if dual else "Monto (S/)")
+    mon_label = "Monto (US$)" if moneda=='USD' else "Monto (US$ / S/)"
     hdr=[_cell(W["n"],"#",fill="EA5A29",bold=True,white=True,jc="center",sz="18"),
          _cell(W["con"],"Concepto",fill="EA5A29",bold=True,white=True,sz="18"),
          _cell(W["fec"],"Fecha de pago",fill="EA5A29",bold=True,white=True,sz="18"),
@@ -76,7 +78,7 @@ def build_table(rows,precio,hipotecario=None,tc=None,saldo_usd=False,moneda='PEN
     directo=0.0; i=0
     for j,(r,mt) in enumerate(zip(rows,m_rows)):
         i+=1; directo+=mt
-        mon_cell = _mon_dual(W["mon"], mt, TC) if (dual and not _es_fila_soles(r["concepto"])) else _cell(W["mon"],m2(mt),bold=True,jc="right")
+        mon_cell = _mon_dual(W["mon"], mt, TC) if dual else _cell(W["mon"],m2(mt),bold=True,jc="right")
         out.append(_row([_cell(W["n"],str(i),jc="center"),
             _cell(W["con"],r["concepto"],bold=True,sub2=r.get("sub2")),
             _cell(W["fec"],r.get("fecha","")),
@@ -86,7 +88,7 @@ def build_table(rows,precio,hipotecario=None,tc=None,saldo_usd=False,moneda='PEN
         out.append(_row([_cell(W["n"],"=",fill="FFF4EE",bold=True,jc="center"),
             _cell(W["con"],f"Subtotal aporte directo ({directo/P*100:.0f}%)",fill="FFF4EE",bold=True),
             _cell(W["fec"],"Durante la construcción.",fill="FFF4EE"),
-            _cell(W["mon"],m2(directo),fill="FFF4EE",bold=True,jc="right"),
+            (_mon_dual(W["mon"],directo,TC,fill="FFF4EE") if dual else _cell(W["mon"],m2(directo),fill="FFF4EE",bold=True,jc="right")),
             _cell(W["pct"],pc(directo/P*100),fill="FFF4EE",bold=True,jc="right")]))
         i+=1; hm=Pr-directo
         hip_mon = _mon_dual(W["mon"], hm, TC) if dual else _cell(W["mon"],m2(hm),bold=True,jc="right")
@@ -130,10 +132,11 @@ def plantilla(nombre, precio, sep=3500.0):
     if nombre in pcts:
         di,hi=pcts[nombre]; firma=P*0.15 if di>=0.30 else P*0.10
         rows=[seprow,{"concepto":"Saldo a la firma","fecha":"A la firma (notaría / inicio de obra).","monto":firma-sep}]
-        rest=P*di-firma; narm=3
-        fechas=["Diciembre de 2026.","Junio de 2027.","Diciembre de 2027."]
-        for k in range(narm):
-            rows.append({"concepto":f"{k+1}.ª Armada","fecha":fechas[k],"monto":rest/narm})
+        rest=P*di-firma
+        if rest>1:  # solo agregar armadas si queda saldo directo por repartir
+            narm=3; fechas=["Diciembre de 2026.","Junio de 2027.","Diciembre de 2027."]
+            for k in range(narm):
+                rows.append({"concepto":f"{k+1}.ª Armada","fecha":fechas[k],"monto":rest/narm})
         return rows,{"concepto":"Saldo con crédito hipotecario","fecha":"Contra entrega (diciembre de 2027).","sub2":"Tasa, plazo y cuota los define el banco."}
     # personalizada (en blanco)
     return [seprow,{"concepto":"Saldo a la firma","fecha":"A la firma.","monto":P*0.20-sep}],None

@@ -80,6 +80,33 @@ def fit_frame(src, maxw=PLANO_MAXW, maxh=PLANO_MAXH):
     buf = io.BytesIO(); im.save(buf, "JPEG", quality=90)
     return buf.getvalue(), cx, cy
 
+EST_AREA={"E01":"17.98","E02":"16.84","E03":"16.45","E04":"16.58","E05":"15.89","E06":"17.00"}
+def _combina_plano_cochera(depa_path, park_path, est_disp, area_txt):
+    """Apila el plano del depa (arriba) + título de cochera + plano de estacionamientos (abajo)."""
+    if not (depa_path and os.path.exists(depa_path) and park_path and os.path.exists(park_path)): return None
+    from PIL import ImageDraw, ImageFont
+    depa=Image.open(depa_path).convert("RGB"); park=Image.open(park_path).convert("RGB")
+    W=depa.width
+    pk=park.resize((W,int(park.height*W/park.width)), Image.LANCZOS)
+    th=int(W*0.055); gap=int(W*0.02)
+    title=f"Cochera asignada: {est_disp}  ({area_txt})"
+    H=depa.height+gap+th+gap+pk.height
+    canvas=Image.new("RGB",(W,H),(255,255,255)); canvas.paste(depa,(0,0))
+    d=ImageDraw.Draw(canvas); font=None
+    for fp in ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf","DejaVuSans-Bold.ttf","DejaVuSans.ttf"):
+        try: font=ImageFont.truetype(fp,int(th*0.62)); break
+        except Exception: pass
+    if font is None: font=ImageFont.load_default()
+    ty=depa.height+gap
+    tb=d.textbbox((0,0),title,font=font)
+    d.text(((W-(tb[2]-tb[0]))//2, ty+(th-(tb[3]-tb[1]))//2 - tb[1]), title, fill=(15,15,15), font=font)
+    py=depa.height+gap+th+gap
+    canvas.paste(pk,(0, py))
+    # recuadro negro alrededor del plano de estacionamientos
+    bw=max(3,int(W*0.004))
+    d.rectangle([0, py, W-1, py+pk.height-1], outline=(0,0,0), width=bw)
+    return canvas
+
 def _remove_tr(xml, marker):
     """Elimina la fila <w:tr> de tabla que contiene el texto `marker`."""
     i = xml.find(marker)
@@ -125,6 +152,10 @@ def construir(cfg, dep):
     sexo=cfg.get("sexo","F").upper(); ape=cfg.get("apellido",""); nombre=cfg["nombre"].upper(); ec=_ec_sexo(cfg.get("estado_civil",""),sexo)
     if sexo=="F": trato="Señora:"; estimado=f"Estimada Sra. {ape}"
     else:         trato="Señor:";  estimado=f"Estimado Sr. {ape}"
+    _est=str(coch.get("est","")).replace("-","").upper() if coch else ""
+    _estd=("E-"+_est[1:]) if (_est.startswith("E") and _est[1:]) else _est
+    _estac_uni=(f", más el Estacionamiento N° {_estd} (16 m², reja corrediza no elevadiza, "
+                f"con partida registral independiente)") if coch else ""
     R={
         "YADIRA LISSET CABALLERO NOEL":nombre,"44578531":str(cfg["dni"]),
         "Estado civil: Soltera":f"Estado civil: {ec}","Soltera":ec,
@@ -136,7 +167,9 @@ def construir(cfg, dep):
         "(junio 2026)":f"({mes_anio(d)})",
         "Departamento Nº 203 – Piso 2 – Tipología 3D-A":f"Departamento Nº {num} – {piso} – Tipología {tip}",
         "Departamento N.° 203, Piso 2.":f"Departamento N.° {num}, {piso}.",
+        "Departamento N° 203 (Unidad N° 05).":f"Departamento N° {num}"+(f" (Unidad N° {un})" if un else "")+_estac_uni+".",
         "Departamento N° 203 (Unidad N° 05)":f"Departamento N° {num}"+(f" (Unidad N° {un})" if un else ""),
+        "Departamento Nº 203 (Unidad Nº 05).":f"Departamento Nº {num}"+(f" (Unidad Nº {un})" if un else "")+_estac_uni+".",
         "Departamento Nº 203 (Unidad Nº 05)":f"Departamento Nº {num}"+(f" (Unidad Nº {un})" if un else ""),
         "Piso 2 — Tipología 3D-A — 76 m²":f"{piso} — Tipología {tip} — {area} m²",
         "Piso 2 — Tipología 3D-A.":f"{piso} — Tipología {tip}.",
@@ -154,9 +187,9 @@ def construir(cfg, dep):
         "TRES MIL QUINIENTOS CON 00/100 SOLES":palabras_soles(S),"US$ 1,000.00":f"US$ {m2(sep_usd)}",
     }
     if coch:
-        R["estacionamiento no incluido"]=f"estacionamiento N° {coch['est']} (16 m², con reja corrediza no elevadiza y partida registral independiente)"
-        R["Departamento Nº 203 – Piso 2 – Tipología 3D-A"]=f"Departamento Nº {num} – {piso} – Tipología {tip} + Estac. N° {coch['est']}"
-        R["Estacionamiento con piso de cemento pulido (no incluido en la presente unidad)."]=f"Estacionamiento N° {coch['est']} incluido: piso de cemento pulido, reja corrediza (no elevadiza), con partida registral independiente."
+        R["estacionamiento no incluido"]=f"estacionamiento N° {_estd} (16 m², con reja corrediza no elevadiza y partida registral independiente)"
+        R["Departamento Nº 203 – Piso 2 – Tipología 3D-A"]=f"Departamento Nº {num} – {piso} – Tipología {tip} + Estac. N° {_estd}"
+        R["Estacionamiento con piso de cemento pulido (no incluido en la presente unidad)."]=f"Estacionamiento N° {_estd} incluido: piso de cemento pulido, reja corrediza (no elevadiza), con partida registral independiente."
     if cfg.get("conyuge"): R["No aplica – DNI No aplica"]=f"{cfg['conyuge']} – DNI {cfg.get('conyuge_dni','')}"
     if sexo=="M": R["la clienta"]="el cliente"
     _terr=dep.get("terraza_m2")
@@ -214,11 +247,24 @@ def main():
     planos_dir=cfg.get("planos_dir",DEFAULT_PLANOS)
     # swap del plano de la ficha (marco ajustado al aspecto real del plano)
     ficha_swap=None; ficha_extent=None
-    if dep.get("plano"):
-        pf=os.path.join(planos_dir,dep["plano"])
-        if os.path.exists(pf):
-            _b,_cx,_cy=fit_frame(pf)
+    _depa_plano=os.path.join(planos_dir,dep["plano"]) if dep.get("plano") else None
+    _coch=cfg.get("cochera")
+    if _coch:
+        # ficha con cochera: plano del depa + plano de estacionamientos (E-01 a E-06) debajo
+        _park=os.path.join(planos_dir,"plano_estacionamientos.jpg")
+        _est=str(_coch.get("est","")).replace("-","").upper()
+        _estd=("E-"+_est[1:]) if (_est.startswith("E") and _est[1:]) else (_est or "—")
+        _area=EST_AREA.get(_est,"16.00")
+        _combo=_combina_plano_cochera(_depa_plano,_park,_estd,f"{_area} m²")
+        if _combo is not None:
+            _tmpimg=os.path.join(out,"_combo_ficha.jpg"); _combo.save(_tmpimg,"JPEG",quality=90)
+            _b,_cx,_cy=fit_frame(_tmpimg)
+            try: os.remove(_tmpimg)
+            except Exception: pass
             ficha_swap={"word/media/plano_distribucion.jpeg": _b}; ficha_extent=(_cx,_cy)
+    if ficha_swap is None and _depa_plano and os.path.exists(_depa_plano):
+        _b,_cx,_cy=fit_frame(_depa_plano)
+        ficha_swap={"word/media/plano_distribucion.jpeg": _b}; ficha_extent=(_cx,_cy)
     # Ficha: ajustar el "cuadro de acabados por ambiente" a la tipologia real
     ndd={"un (01) dormitorio":1,"dos (02) dormitorios":2,"tres (03) dormitorios":3}.get(dep["dormitorios_txt"],3)
     nbb=1 if "un (01)" in dep["banos_txt"] else 2
@@ -233,6 +279,10 @@ def main():
         ficha_extra["Dormitorios secundarios (02)"]="Dormitorio secundario (01)"
     if not dep.get("terraza_m2"): ficha_remove.append("Perímetro con paredes pintadas"); ficha_remove.append("Área de terraza (no techada)")
     if not cfg.get("cochera"): ficha_remove.append("Reja corrediza de apertura manual")
+    # con cochera el plano combinado es alto: dejar el título "2. Distribución" en su flujo natural (sin salto de página)
+    # para no generar una hoja en blanco; sin cochera se conserva el salto (título arriba de su hoja con la imagen).
+    if cfg.get("cochera"):
+        ficha_extra['<w:pPr><w:pageBreakBefore/><w:spacing w:before="320" w:after="120"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="EA5A29"/></w:rPr><w:t>2. DISTRIBUCIÓN DE AMBIENTES</w:t>']='<w:pPr><w:spacing w:before="320" w:after="120"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="EA5A29"/></w:rPr><w:t>2. DISTRIBUCIÓN DE AMBIENTES</w:t>'
     jobs=[]
     if "A" in cfg.get("opciones",["A","B"]): jobs.append(("TPL_Propuesta_OpcionA.docx",f"Propuesta_VIVA_PRO_Depa{num}_{ape}_OpcionA.docx",None))
     if "B" in cfg.get("opciones",["A","B"]): jobs.append(("TPL_Propuesta_OpcionB.docx",f"Propuesta_VIVA_PRO_Depa{num}_{ape}_OpcionB.docx",None))

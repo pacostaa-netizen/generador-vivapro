@@ -43,6 +43,7 @@ def build_propuesta(cfg):
     dep=cat[str(cfg["codigo_depto"])]; coch=cfg.get("cochera")
     P=float(cfg["precio_soles"])+(float(coch["precio"]) if coch else 0)
     rows=cfg["cronograma"]; hip=cfg.get("hipotecario")
+    # % sobre el total de la operación (departamento + cochera = 100%)
     directo=sum(C.monto_de(r,P)/P*100 for r in rows)
     hip_pct=100-directo
     d=datetime.date.fromisoformat(cfg["fecha"]); num=dep["codigo"]; piso=dep["piso"]; tip=dep["tipologia"]; area=dep["area_m2"]
@@ -62,25 +63,29 @@ def build_propuesta(cfg):
         introtxt=f"el precio se cancela íntegramente a LA HAUS ({directo:.0f}% directo), sin intervención bancaria."
         secbody="El precio de venta se cancela directamente a LA HAUS, sin intervención bancaria, conforme al siguiente cronograma:"
         head="PLAN PERSONALIZADO (FINANCIAMIENTO DIRECTO)"
-    tc=float(cfg.get("tc") or 3.5); saldo_usd=bool(cfg.get("saldo_usd",False))
+    tc=float(cfg.get("tc") or 3.5)
     moneda=cfg.get("moneda","PEN")
-    usd=P/tc
+    Pdep=float(cfg["precio_soles"]); Pcoch=(float(coch["precio"]) if coch else 0.0)
+    def _dual(v):
+        return f"US$ {v:,.2f}" if moneda=="USD" else f"US$ {v/tc:,.2f}  /  S/ {v:,.2f}"
+    if coch:
+        _est=str(coch.get("est","")).replace("-","").upper()
+        _estd=("E-"+_est[1:]) if (_est.startswith("E") and _est[1:]) else (_est or "estacionamiento")
+        _BR='</w:t><w:br/><w:t xml:space="preserve">'
+        precio_dual=(f"Departamento: {_dual(Pdep)}{_BR}Estacionamiento {_estd}: {_dual(Pcoch)}{_BR}"
+                     f"Precio total: {_dual(P)}")
+    else:
+        precio_dual=_dual(P)
     if moneda=="USD":
-        precio_dual=f"US$ {P:,.2f}"
         lbl31="Precio congelado:"
         body31=f"el precio de US$ {P:,.2f} se mantiene fijo durante toda la vigencia del Contrato de Compraventa de Bien Futuro."
-    elif saldo_usd:
-        precio_dual=f"US$ {usd:,.2f}  /  S/ {P:,.2f}"
-        lbl31="Moneda de pago:"
-        body31=(f"los pagos hasta la firma en notaría se cancelan en soles a un tipo de cambio fijo de S/ {tc:.2f} "
-                f"por dólar; los pagos posteriores (armadas y saldo final) se expresan en dólares y se cancelan en "
-                f"soles al tipo de cambio venta SBS del día de pago, el cual en ningún caso será menor a S/ {tc:.2f} "
-                f"por dólar.")
     else:
-        precio_dual=f"US$ {usd:,.2f}  /  S/ {P:,.2f}"
-        lbl31="Precio congelado:"
-        body31=f"el precio de S/ {P:,.2f} se mantiene fijo durante toda la vigencia del Contrato de Compraventa de Bien Futuro."
-    table=C.build_table(rows,P,hip,tc=cfg.get("tc"),saldo_usd=cfg.get("saldo_usd",False),moneda=moneda)
+        lbl31="Moneda de pago:"
+        body31=(f"todos los precios y pagos se expresan en dólares de los Estados Unidos de América (US$); su "
+                f"equivalente en soles es referencial a un tipo de cambio de S/ {tc:.2f} por dólar. Cada pago se cancela "
+                f"en soles al tipo de cambio venta publicado por la SBS el día de pago, el cual en ningún caso será "
+                f"menor a S/ {tc:.2f} por dólar.")
+    table=C.build_table(rows,P,hip,tc=cfg.get("tc"),moneda=moneda)
     out=cfg["carpeta_salida"]; os.makedirs(out,exist_ok=True)
     name=f"Propuesta_VIVA_PRO_Depa{num}_{_cli_tag(cfg['nombre'],ape)}_Personalizada.docx"
     outdocx=os.path.join(out,name)

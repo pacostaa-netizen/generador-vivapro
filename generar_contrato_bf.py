@@ -46,12 +46,13 @@ def _build_42(rows, hip, P, moneda_mode, tc, fecha_firma):
     moneda_mode: 'PEN' (dual: hasta firma soles, después dólares) | 'PEN_FIJO' (todo soles) | 'USD' (todo dólares)."""
     dual = (moneda_mode=="PEN")
     def cur_for(concepto):
-        if moneda_mode=="USD": return "D"
         if moneda_mode=="PEN_FIJO": return "S"
-        # dual: soles hasta la firma; dólares después
-        return "S" if C._es_fila_soles(concepto) else "D"
+        # PEN y USD: todos los montos se expresan en dólares (equivalente en soles referencial)
+        return "D"
     def conv(soles, cur):
-        return soles/tc if cur=="D" else soles
+        if cur=="S": return soles
+        # cur=="D": en PEN el monto viene en soles -> se divide por tc; en USD ya está en dólares
+        return soles/tc if moneda_mode!="USD" else soles
     out=[ _para("La forma de pago se efectuará de la siguiente manera:", bold_lead="4.2 ") ]
     letters="abcdefghij"; i=0; acum=0.0
     for r in rows:
@@ -96,10 +97,10 @@ def _build_42(rows, hip, P, moneda_mode, tc, fecha_firma):
 
 def _moneda_clause(mode, tc):
     if mode=="PEN":
-        return _para(f"Los pagos hasta la firma en notaría se cancelan en soles a un tipo de cambio fijo de "
-                     f"S/ {tc:.2f} por dólar; los pagos posteriores (armadas y saldo final) se expresan en dólares y "
-                     f"se cancelan en soles al tipo de cambio venta publicado por la SBS el día de pago, el cual en "
-                     f"ningún caso será menor a S/ {tc:.2f} por dólar.", bold_lead="4.5 MONEDA DE PAGO. ")
+        return _para(f"Todos los precios y pagos del presente contrato se expresan en dólares de los Estados Unidos de "
+                     f"América (US$); su equivalente en soles es referencial a un tipo de cambio de S/ {tc:.2f} por dólar. "
+                     f"Cada pago se cancela en soles al tipo de cambio venta publicado por la SBS el día de pago, el cual "
+                     f"en ningún caso será menor a S/ {tc:.2f} por dólar.", bold_lead="4.5 MONEDA DE PAGO. ")
     if mode=="USD":
         return _para("Todos los pagos del presente contrato se pactan y cancelan en dólares americanos (US$).",
                      bold_lead="4.5 MONEDA DE PAGO. ")
@@ -111,8 +112,7 @@ def build_contrato(cfg):
     P=float(cfg["precio_soles"])+(float(coch["precio"]) if coch else 0)
     rows=cfg["cronograma"]; hip=cfg.get("hipotecario")
     tc=float(cfg.get("tc") or 3.5); moneda=cfg.get("moneda","PEN")
-    saldo_usd=bool(cfg.get("saldo_usd",False))
-    mode = "USD" if moneda=="USD" else ("PEN" if saldo_usd else "PEN_FIJO")
+    mode = "USD" if moneda=="USD" else "PEN"
     # datos comprador
     sexo=cfg.get("sexo","F").upper()
     nom=cfg["nombre"].strip().upper()
@@ -127,11 +127,11 @@ def build_contrato(cfg):
     # fechas
     d_firma=datetime.date.fromisoformat(cfg["fecha"])
     entrega=cfg.get("entrega_str","30 de noviembre de 2027")
-    # precio 4.1 en la moneda base del contrato
+    # precio 4.1 en dólares (en PEN el precio está en soles -> equivalente ÷ tc; en USD ya está en dólares)
     if mode=="USD":
-        pmon=money_num(P/tc,"D"); pwords=money_words(P/tc,"D")
+        pmon=money_num(P,"D"); pwords=money_words(P,"D")
     else:
-        pmon=money_num(P,"S"); pwords=money_words(P,"S")
+        pmon=money_num(P/tc,"D"); pwords=money_words(P/tc,"D")
 
     out=cfg["carpeta_salida"]; os.makedirs(out,exist_ok=True)
     ape=(cfg.get("apellido") or "").replace(" ","")
@@ -140,6 +140,10 @@ def build_contrato(cfg):
     shutil.copyfile(os.path.join(TPL,"TPL_Contrato_BienFuturo.docx"),outdocx)
     tmp=outdocx+".tmp"
     bloque42=_build_42(rows,hip,P,mode,tc,d_firma)
+    _est=str(coch.get("est","")).replace("-","").upper() if coch else ""
+    _estd=("E-"+_est[1:]) if (_est.startswith("E") and _est[1:]) else _est
+    _estac_uni=(f", más el Estacionamiento N° {_estd} (16 m², reja corrediza no elevadiza, "
+                f"con partida registral independiente)") if coch else ""
 
     R={
       # comprador (intro)
@@ -149,7 +153,7 @@ def build_contrato(cfg):
       "30 de enero de 2028": entrega,
       # unidad 3.1
       "Departamento N° 203, que en el Reglamento Interno y en la partida registral independiente se identificará como Unidad Inmobiliaria N° 7, ubicado en el segundo (2°) piso de EL EDIFICIO, con un área techada aproximada de 76 m² (SETENTA Y SEIS METROS CUADRADOS), tipología 3D-A, de tres (3) dormitorios":
-        f"Departamento N° {num}, que en el Reglamento Interno y en la partida registral independiente se identificará como Unidad Inmobiliaria N° {ui}, ubicado en el {piso} piso de EL EDIFICIO, con un área techada aproximada de {area} m² ({area_w}), tipología {tip}, de {dorm}",
+        f"Departamento N° {num}, que en el Reglamento Interno y en la partida registral independiente se identificará como Unidad Inmobiliaria N° {ui}, ubicado en el {piso} piso de EL EDIFICIO, con un área techada aproximada de {area} m² ({area_w}), tipología {tip}, de {dorm}{_estac_uni}",
       # precio 4.1
       "S/ 320,000.00 (TRESCIENTOS VEINTE MIL CON 00/100 SOLES)": f"{pmon} ({pwords})",
       # firma
@@ -159,7 +163,7 @@ def build_contrato(cfg):
     }
     if coch:
         R["El presente contrato no comprende estacionamiento ni depósito."]=(
-            f"El presente contrato comprende además el Estacionamiento N° {coch['est']} (16 m², reja corrediza no elevadiza, "
+            f"El presente contrato comprende además el Estacionamiento N° {_estd} (16 m², reja corrediza no elevadiza, "
             f"con partida registral independiente).")
 
     with zipfile.ZipFile(outdocx) as zin, zipfile.ZipFile(tmp,"w",zipfile.ZIP_DEFLATED) as zout:
