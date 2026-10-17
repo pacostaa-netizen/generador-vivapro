@@ -101,11 +101,12 @@ else:
 
 st.subheader("¿Qué generar?")
 g1,g2=st.columns(2)
-prop=g1.checkbox("Propuesta económica (cronograma de arriba)",value=True)
-fic=g2.checkbox("Ficha Técnica",value=True)
-cbf=g1.checkbox("Contrato de Bien Futuro",value=False,help="Contrato estándar (comprador directo). El caso con poder/representación se hace aparte.")
-entrega_str=g2.text_input("Fecha de entrega (contrato)",value="30 de noviembre de 2027")
-sim=False; con=False; prof=False  # Simulación y Contrato de Separación retirados; proforma va dentro de la Propuesta
+prof=g1.checkbox("Proforma",value=True)
+prop=g2.checkbox("Propuesta económica (cronograma de arriba)",value=False)
+fic=g1.checkbox("Ficha Técnica",value=False)
+cbf=g2.checkbox("Contrato de Bien Futuro",value=False,help="Contrato estándar (comprador directo). El caso con poder/representación se hace aparte.")
+entrega_str=g1.text_input("Fecha de entrega (contrato)",value="30 de noviembre de 2027")
+sim=False; con=False  # Simulación y Contrato de Separación retirados
 
 if st.button("⚙️ GENERAR DOCUMENTOS",use_container_width=True,type="primary"):
     if not nombre or not dni or not cod:
