@@ -101,6 +101,7 @@
   "precio_lista_soles": 259000,
   "bbp": 7900,
   "plano": "902.jpg",
+  "azotea": "902_azotea.jpg",
   "terraza_m2": 33,
   "ui": 27
  },
@@ -206,6 +207,7 @@
   "precio_lista_soles": 346500,
   "bbp": 7900,
   "plano": "901.jpg",
+  "azotea": "901_azotea.png",
   "terraza_m2": 57,
   "ui": 26
  },
@@ -311,6 +313,7 @@
   "precio_lista_soles": 346500,
   "bbp": 7900,
   "plano": "903.jpg",
+  "azotea": "903_azotea.png",
   "terraza_m2": 27,
   "ui": 28
  },
